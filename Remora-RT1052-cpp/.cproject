@@ -803,7 +803,7 @@
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
 	<storageModule moduleId="refreshScope" versionNumber="2">
 		<configuration configurationName="Debug">
-			<resource resourceType="PROJECT" workspacePath="/evkbimxrt1050_lwip_lwip_ping_bm_cpp"/>
+			<resource resourceType="PROJECT" workspacePath="/remora-rt1052-cpp"/>
 		</configuration>
 		<configuration configurationName="Release">
 			<resource resourceType="PROJECT" workspacePath="/evkbimxrt1050_lwip_lwip_ping_bm_cpp"/>
