@@ -16,7 +16,7 @@ Module::Module(int32_t threadFreq, int32_t slowUpdateFreq) :
 {
 	this->counter = 0;
 	this->updateCount = this->threadFreq / this->slowUpdateFreq;
-	printf("\nCreating a slower module, updating every %d thread cycles\n",this->updateCount);
+	printf("\nCreating a slower module, updating every %d thread cycles\n",(int)this->updateCount);
 }
 
 Module::~Module(){}

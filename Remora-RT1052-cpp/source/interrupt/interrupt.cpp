@@ -1,4 +1,5 @@
 #include "interrupt.h"
+#include "MIMXRT1052.h"
 
 #include <cstdio>
 
@@ -17,13 +18,13 @@ void Interrupt::Register(int interruptNumber, Interrupt* intThisPtr)
 	ISRVectorTable[interruptNumber] = intThisPtr;
 }
 
-void Interrupt::PIT_Chn0_Wrapper(void)
+void Interrupt::TIM1_Wrapper(void)
 {
-	ISRVectorTable[0]->ISR_Handler();
+	ISRVectorTable[GPT1_IRQn]->ISR_Handler();
 }
 
-void Interrupt::PIT_Chn1_Wrapper(void)
+void Interrupt::TIM2_Wrapper(void)
 {
-	ISRVectorTable[1]->ISR_Handler();
+	ISRVectorTable[GPT2_IRQn]->ISR_Handler();
 }
 

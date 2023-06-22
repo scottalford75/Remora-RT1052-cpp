@@ -1,8 +1,14 @@
 #ifndef TIMER_H
 #define TIMER_H
 
-#include "fsl_pit.h"
+#include "MIMXRT1052.h"
 #include <stdint.h>
+
+#include "fsl_gpt.h"
+
+//#define TIM_PSC 1
+//#define APB1CLK SystemCoreClock/2
+//#define APB2CLK SystemCoreClock
 
 class TimerInterrupt; // forward declaration
 class pruThread; // forward declaration
@@ -14,18 +20,17 @@ class pruTimer
 	private:
 
 		TimerInterrupt* 	interruptPtr;
-		pit_chnl_t 			channel;
+		GPT_Type* 	    	timer;
+		IRQn_Type 			irq;
 		uint32_t 			frequency;
 		pruThread* 			timerOwnerPtr;
 
-		pit_config_t 		pitConfig;
-
 		void startTimer(void);
-		void timerTick();			// Private timer tiggered method
+		void timerTick();			// Private timer triggered method
 
 	public:
 
-		pruTimer(pit_chnl_t channel, uint32_t frequency, pruThread* ownerPtr);
+		pruTimer(GPT_Type* timer, IRQn_Type irq, uint32_t frequency, pruThread* ownerPtr);
         void stopTimer(void);
 
 };

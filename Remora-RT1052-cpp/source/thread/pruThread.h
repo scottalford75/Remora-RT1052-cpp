@@ -1,7 +1,7 @@
 #ifndef PRUTHREAD_H
 #define PRUTHREAD_H
 
-#include "fsl_pit.h"
+#include "MIMXRT1052.h"
 #include "timer.h"
 
 // Standard Template Library (STL) includes
@@ -18,7 +18,8 @@ class pruThread
 
 		pruTimer* 		    TimerPtr;
 	
-		pit_chnl_t 			channel;
+		GPT_Type* 	    	timer;
+		IRQn_Type 			irq;
 		uint32_t 			frequency;
 
 		bool hasThreadPost;		// run updatePost() vector
@@ -29,7 +30,7 @@ class pruThread
 
 	public:
 
-		pruThread(pit_chnl_t channel, uint32_t frequency);
+		pruThread(GPT_Type* timer, IRQn_Type irq, uint32_t frequency);
 
 		void registerModule(Module *module);
 		void registerModulePost(Module *module);

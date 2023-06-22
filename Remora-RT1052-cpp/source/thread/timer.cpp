@@ -5,15 +5,16 @@
 #include "timer.h"
 #include "pruThread.h"
 
-
+#include "fsl_gpt.h"
 
 // Timer constructor
-pruTimer::pruTimer(pit_chnl_t channel, uint32_t frequency, pruThread* ownerPtr):
-	channel(channel),
+pruTimer::pruTimer(GPT_Type* timer, IRQn_Type irq, uint32_t frequency, pruThread* ownerPtr):
+	timer(timer),
+	irq(irq),
 	frequency(frequency),
 	timerOwnerPtr(ownerPtr)
 {
-	interruptPtr = new TimerInterrupt(this->channel, this);	// Instantiate a new Timer Interrupt object and pass "this" pointer
+	interruptPtr = new TimerInterrupt(this->irq, this);	// Instantiate a new Timer Interrupt object and pass "this" pointer
 
 	this->startTimer();
 }
@@ -29,35 +30,39 @@ void pruTimer::timerTick(void)
 
 void pruTimer::startTimer(void)
 {
-    // The Periodic Interrupt Timer (PIT) module is used to trigger the threads
+	uint32_t gptFreq, compareVal;
+	gpt_config_t gptConfig;
 
-	if (this->channel == kPIT_Chnl_0)
+    if (this->timer == GPT1)
     {
-        printf("	power on Timer 0\n\r");
+        printf("	configuring Timer 1\n\r");
     }
-    else if (this->channel == kPIT_Chnl_1)
+    else if (this->timer == GPT2)
     {
-        printf("	power on Timer 1\n\r");
+        printf("	configuring Timer 2\n\r");
     }
 
-    CLOCK_SetMux(kCLOCK_PerclkMux, 1U);
-    CLOCK_SetDiv(kCLOCK_PerclkDiv, 0U);
-    PIT_GetDefaultConfig(&this->pitConfig);
-    PIT_Init(PIT, &this->pitConfig);
 
-    PIT_SetTimerPeriod(PIT, this->channel, CLOCK_GetFreq(kCLOCK_OscClk)/this->frequency);
-    PIT_EnableInterrupts(PIT, this->channel, kPIT_TimerInterruptEnable);
+    gptFreq = CLOCK_GetFreq(kCLOCK_PerClk);
 
-    EnableIRQ(PIT_IRQn);
+    //timer update frequency = TIM_CLK/(PSC+1)/TIM_ARR
+
+    compareVal = gptFreq / this->frequency;
+
+    GPT_GetDefaultConfig(&gptConfig);
+    GPT_Init(this->timer, &gptConfig);
+    GPT_SetOutputCompareValue(this->timer, kGPT_OutputCompare_Channel1, compareVal);
+    GPT_EnableInterrupts(this->timer, kGPT_OutputCompare1InterruptEnable);
+    EnableIRQ(this->irq);
+    GPT_StartTimer(this->timer);
 
     printf("	timer started\n");
 }
 
-
 void pruTimer::stopTimer()
 {
-	PIT_DisableInterrupts(PIT, this->channel, kPIT_TimerInterruptEnable);
+    DisableIRQ(this->irq);
 
     printf("	timer stop\n\r");
-    PIT_StopTimer(PIT, this->channel);
+    GPT_StopTimer(this->timer);
 }

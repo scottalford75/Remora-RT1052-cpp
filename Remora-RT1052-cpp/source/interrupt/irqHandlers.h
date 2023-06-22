@@ -1,31 +1,27 @@
+#include "fsl_gpt.h"
 #include "interrupt.h"
 
-#include "fsl_pit.h"
 
 extern "C" {
 
-void PIT_IRQHandler(void)
-{
-	volatile uint32_t status;
-
-    status = PIT_GetStatusFlags(PIT, kPIT_Chnl_0);
-	if(status & (uint32_t)kPIT_TimerFlag)
+	void GPT1_IRQHandler()
 	{
-		PIT_ClearStatusFlags(PIT, kPIT_Chnl_0, kPIT_TimerFlag);
+		if(GPT_GetStatusFlags(GPT1, kGPT_OutputCompare1Flag))
+		{
+			GPT_ClearStatusFlags(GPT1, kGPT_OutputCompare1Flag);
+			Interrupt::TIM1_Wrapper();
+		}
 		__DSB();
-
-		Interrupt::PIT_Chn0_Wrapper();
 	}
 
-    status = PIT_GetStatusFlags(PIT, kPIT_Chnl_1);
-	if(status & (uint32_t)kPIT_TimerFlag)
+	void GPT2_IRQHandler()
 	{
-		PIT_ClearStatusFlags(PIT, kPIT_Chnl_1, kPIT_TimerFlag);
+		if(GPT_GetStatusFlags(GPT2, kGPT_OutputCompare1Flag))
+		{
+			GPT_ClearStatusFlags(GPT2, kGPT_OutputCompare1Flag);
+			Interrupt::TIM2_Wrapper();
+		}
 		__DSB();
-
-		Interrupt::PIT_Chn1_Wrapper();
 	}
-
-}
 
 }

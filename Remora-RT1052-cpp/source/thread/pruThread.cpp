@@ -7,16 +7,18 @@
 using namespace std;
 
 // Thread constructor
-pruThread::pruThread(pit_chnl_t channel, uint32_t frequency) :
-	channel(channel),
+pruThread::pruThread(GPT_Type* timer, IRQn_Type irq, uint32_t frequency) :
+	timer(timer),
+	irq(irq),
 	frequency(frequency)
 {
-	printf("Creating thread %d\n", this->frequency);
+	printf("Creating thread %d\n", (int)this->frequency);
 }
+
 
 void pruThread::startThread(void)
 {
-	TimerPtr = new pruTimer(this->channel, this->frequency, this);
+	TimerPtr = new pruTimer(this->timer, this->irq, this->frequency, this);
 }
 
 void pruThread::stopThread(void)

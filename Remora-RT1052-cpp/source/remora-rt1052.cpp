@@ -78,6 +78,37 @@ bool threadsRunning = false;
 pruThread* servoThread;
 pruThread* baseThread;
 
+// unions for RX, TX and MPG data
+rxData_t rxBuffer;				// temporary RX buffer
+volatile rxData_t rxData;
+volatile txData_t txData;
+mpgData_t mpgData;
+
+// pointers to data
+volatile rxData_t*  ptrRxData = &rxData;
+volatile txData_t*  ptrTxData = &txData;
+volatile int32_t* ptrTxHeader;
+volatile bool*    ptrPRUreset;
+volatile int32_t* ptrJointFreqCmd[JOINTS];
+volatile int32_t* ptrJointFeedback[JOINTS];
+volatile uint8_t* ptrJointEnable;
+volatile float*   ptrSetPoint[VARIABLES];
+volatile float*   ptrProcessVariable[VARIABLES];
+volatile uint32_t* ptrInputs;
+volatile uint32_t* ptrOutputs;
+volatile uint16_t* ptrNVMPGInputs;
+volatile mpgData_t* ptrMpgData = &mpgData;
+
+
+void loadModules(void)
+{
+	Module* blinkB = new Blink("P1_22", PRU_BASEFREQ, PRU_BASEFREQ);
+	baseThread->registerModule(blinkB);
+
+	Module* blinkS = new Blink("P1_17", PRU_SERVOFREQ, PRU_SERVOFREQ);
+	servoThread->registerModule(blinkS);
+}
+
 
 // Interrupt service for SysTick timer.
 extern "C" {
@@ -90,24 +121,141 @@ extern "C" {
 
 int main(void)
 {
+	enum State currentState;
+	enum State prevState;
+
     BOARD_ConfigMPU();
     BOARD_InitBootPins();
     BOARD_InitBootClocks();
     BOARD_InitDebugConsole();
 
+    currentState = ST_SETUP;
+    prevState = ST_RESET;
+
+    printf("\nRemora RT1052 starting\n");
+
     initEthernet();
-
-    PRINTF("\r\n Remora RT1052 firmware for Novusun / Digital Dream CNC controller starting\r\n");
-
-    createThreads();
-
-    Module* blinky = new Blink("P3_00", PRU_SERVOFREQ, 1);
-    servoThread->registerModule(blinky);
-    servoThread->startThread();
 
 
     while (1)
     {
+ 	   switch(currentState){
+     		          case ST_SETUP:
+     		              // do setup tasks
+     		              if (currentState != prevState)
+     		              {
+     		                  printf("\n## Entering SETUP state\n\n");
+     		              }
+     		              prevState = currentState;
+
+     		              //jsonFromFlash(strJson);
+     		              //deserialiseJSON();
+     		              //configThreads();
+     		              createThreads();
+     		              //debugThreadHigh();
+     		              loadModules();
+     		              //debugThreadLow();
+     		              //udpServer_init();
+     		              //IAP_tftpd_init();
+
+     		              currentState = ST_START;
+     		              break;
+
+     		          case ST_START:
+     		              // do start tasks
+     		              if (currentState != prevState)
+     		              {
+     		                  printf("\n## Entering START state\n");
+     		              }
+     		              prevState = currentState;
+
+     		              if (!threadsRunning)
+     		              {
+     		                  // Start the threads
+     		                  printf("\nStarting the BASE thread\n");
+     		                  baseThread->startThread();
+
+     		                  printf("\nStarting the SERVO thread\n");
+     		                  servoThread->startThread();
+
+     		                  threadsRunning = true;
+     		              }
+
+     		              currentState = ST_IDLE;
+
+     		              break;
+
+
+     		          case ST_IDLE:
+     		              // do something when idle
+     		              if (currentState != prevState)
+     		              {
+     		                  printf("\n## Entering IDLE state\n");
+     		              }
+     		              prevState = currentState;
+
+     		              //wait for data before changing to running state
+     		              /*if (comms->getStatus())
+     		              {
+     		                  currentState = ST_RUNNING;
+     		              }
+ 						*/
+     		              break;
+
+     		          case ST_RUNNING:
+     		              // do running tasks
+     		              if (currentState != prevState)
+     		              {
+     		                  printf("\n## Entering RUNNING state\n");
+     		              }
+     		              prevState = currentState;
+
+     		              /*if (comms->getStatus() == false)
+     		              {
+     		            	  currentState = ST_RESET;
+     		              }
+     		              */
+     		              break;
+
+     		          case ST_STOP:
+     		              // do stop tasks
+     		              if (currentState != prevState)
+     		              {
+     		                  printf("\n## Entering STOP state\n");
+     		              }
+     		              prevState = currentState;
+
+
+     		              currentState = ST_STOP;
+     		              break;
+
+     		          case ST_RESET:
+     		              // do reset tasks
+     		              if (currentState != prevState)
+     		              {
+     		                  printf("\n## Entering RESET state\n");
+     		              }
+     		              prevState = currentState;
+
+     		              // set all of the rxData buffer to 0
+     		              // rxData.rxBuffer is volatile so need to do this the long way. memset cannot be used for volatile
+     		              printf("   Resetting rxBuffer\n");
+     		              {
+     		                  int n = sizeof(rxData.rxBuffer);
+     		                  while(n-- > 0)
+     		                  {
+     		                      rxData.rxBuffer[n] = 0;
+     		                  }
+     		              }
+
+     		              currentState = ST_IDLE;
+     		              break;
+
+     		          case ST_WDRESET:
+     		        	  // force a reset
+     		        	  //HAL_NVIC_SystemReset();
+     		              break;
+     		  }
 
         EthernetTasks();
     }

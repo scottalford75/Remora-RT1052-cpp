@@ -3,7 +3,7 @@
 
 // Base class for all interrupt derived classes
 
-#define PERIPH_COUNT_IRQn	4				// 4 PIT timers available
+#define PERIPH_COUNT_IRQn	152				// Total number of device interrupt sources
 
 class Interrupt
 {
@@ -18,8 +18,8 @@ class Interrupt
 		static void Register(int interruptNumber, Interrupt* intThisPtr);
 
 		// wrapper functions to ISR_Handler()
-		static void PIT_Chn0_Wrapper();
-        static void PIT_Chn1_Wrapper();
+		static void TIM1_Wrapper();
+        static void TIM2_Wrapper();
 
 		virtual void ISR_Handler(void) = 0;
 
