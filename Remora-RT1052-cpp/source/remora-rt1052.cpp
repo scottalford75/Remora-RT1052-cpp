@@ -34,6 +34,50 @@ along with this program; If not, see <http://www.gnu.org/licenses/>.
 #include "configuration.h"
 #include "remora.h"
 
+// libraries
+#include <sys/errno.h>
+#include "lib/ArduinoJson6/ArduinoJson.h"
+
+// drivers
+#include "drivers/pin/pin.h"
+
+// interrupts
+#include "interrupt/irqHandlers.h"
+#include "interrupt/interrupt.h"
+
+// threads
+#include "thread/pruThread.h"
+#include "thread/createThreads.h"
+
+// modules
+#include "modules/module.h"
+#include "modules/blink/blink.h"
+
+
+// state machine
+enum State {
+    ST_SETUP = 0,
+    ST_START,
+    ST_IDLE,
+    ST_RUNNING,
+    ST_STOP,
+    ST_RESET,
+    ST_WDRESET
+};
+
+uint8_t resetCnt;
+uint32_t base_freq = PRU_BASEFREQ;
+uint32_t servo_freq = PRU_SERVOFREQ;
+
+// boolean
+volatile bool PRUreset;
+bool configError = false;
+bool threadsRunning = false;
+
+// pointers to objects with global scope
+pruThread* servoThread;
+pruThread* baseThread;
+
 
 // Interrupt service for SysTick timer.
 extern "C" {
@@ -54,6 +98,13 @@ int main(void)
     initEthernet();
 
     PRINTF("\r\n Remora RT1052 firmware for Novusun / Digital Dream CNC controller starting\r\n");
+
+    createThreads();
+
+    Module* blinky = new Blink("P3_00", PRU_SERVOFREQ, 1);
+    servoThread->registerModule(blinky);
+    servoThread->startThread();
+
 
     while (1)
     {
