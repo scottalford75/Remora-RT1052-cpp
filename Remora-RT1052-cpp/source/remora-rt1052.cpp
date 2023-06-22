@@ -132,7 +132,7 @@ int main(void)
     currentState = ST_SETUP;
     prevState = ST_RESET;
 
-    printf("\nRemora RT1052 starting\n");
+    printf("\nRemora RT1052 starting\n\n");
 
     initEthernet();
 
