@@ -52,6 +52,7 @@ along with this program; If not, see <http://www.gnu.org/licenses/>.
 // modules
 #include "modules/module.h"
 #include "modules/blink/blink.h"
+#include "modules/comms/RemoraComms.h"
 
 
 // state machine
@@ -77,11 +78,14 @@ bool threadsRunning = false;
 // pointers to objects with global scope
 pruThread* servoThread;
 pruThread* baseThread;
+RemoraComms* comms;
 
 // unions for RX, TX and MPG data
 rxData_t rxBuffer;				// temporary RX buffer
 volatile rxData_t rxData;
 volatile txData_t txData;
+volatile bool cmdReceived;
+volatile bool mpgReceived;
 mpgData_t mpgData;
 
 // pointers to data
@@ -102,11 +106,19 @@ volatile mpgData_t* ptrMpgData = &mpgData;
 
 void loadModules(void)
 {
+    printf("\n4. Loading modules\n");
+
+	// Ethernet communication monitoring
+	comms = new RemoraComms();
+	servoThread->registerModule(comms);
+
+/*
 	Module* blinkB = new Blink("P1_22", PRU_BASEFREQ, PRU_BASEFREQ);
 	baseThread->registerModule(blinkB);
 
 	Module* blinkS = new Blink("P1_17", PRU_SERVOFREQ, PRU_SERVOFREQ);
 	servoThread->registerModule(blinkS);
+*/
 }
 
 
@@ -155,7 +167,7 @@ int main(void)
      		              //debugThreadHigh();
      		              loadModules();
      		              //debugThreadLow();
-     		              //udpServer_init();
+     		              udpServer_init();
      		              //IAP_tftpd_init();
 
      		              currentState = ST_START;
@@ -195,11 +207,11 @@ int main(void)
      		              prevState = currentState;
 
      		              //wait for data before changing to running state
-     		              /*if (comms->getStatus())
+     		              if (comms->getStatus())
      		              {
      		                  currentState = ST_RUNNING;
      		              }
- 						*/
+
      		              break;
 
      		          case ST_RUNNING:
@@ -210,11 +222,11 @@ int main(void)
      		              }
      		              prevState = currentState;
 
-     		              /*if (comms->getStatus() == false)
+     		              if (comms->getStatus() == false)
      		              {
      		            	  currentState = ST_RESET;
      		              }
-     		              */
+
      		              break;
 
      		          case ST_STOP:

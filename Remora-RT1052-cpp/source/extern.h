@@ -18,7 +18,6 @@ extern volatile bool PRUreset;
 // pointers to objects with global scope
 extern pruThread* baseThread;
 extern pruThread* servoThread;
-extern pruThread* commsThread;
 extern Module* MPG;
 
 // unions for RX and TX data

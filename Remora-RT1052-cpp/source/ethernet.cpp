@@ -19,12 +19,15 @@
 
 #include "configuration.h"
 #include "remora.h"
+#include "modules/comms/RemoraComms.h"
 
 extern rxData_t rxBuffer;
 extern volatile rxData_t rxData;
 extern volatile txData_t txData;
 extern volatile bool cmdReceived;
 extern volatile bool mpgReceived;
+
+extern RemoraComms* comms;
 
 static mdio_handle_t mdioHandle = {.ops = &enet_ops};
 static phy_handle_t phyHandle   = {.phyAddr = BOARD_ENET0_PHY_ADDRESS, .mdioHandle = &mdioHandle, .ops = &phylan8720a_ops};
@@ -117,13 +120,13 @@ void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
 	{
 		txData.header = PRU_DATA;
 		txlen = BUFFER_SIZE;
-		cmdReceived = true;
+		comms->dataReceived();
 	}
 	else if (rxBuffer.header == PRU_WRITE)
 	{
 		txData.header = PRU_ACKNOWLEDGE;
 		txlen = sizeof(txData.header);
-		cmdReceived = true;
+		comms->dataReceived();
 
 		// ensure an atomic access to the rxBuffer
 		// disable thread interrupts
