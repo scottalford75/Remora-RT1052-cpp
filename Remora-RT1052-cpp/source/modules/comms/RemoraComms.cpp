@@ -5,6 +5,10 @@ RemoraComms::RemoraComms()
 {
 	printf("Creating an Ethernet communication monitoring module\n");
 
+
+	this->CommsPin = new Pin(LED, OUTPUT);
+	this->CommsPin->set(this->status);
+
 }
 
 
@@ -14,6 +18,7 @@ void RemoraComms::update()
 	{
 		this->noDataCount = 0;
 		this->status = true;
+		this->CommsPin->set(!this->status);
 	}
 	else
 	{
@@ -24,6 +29,7 @@ void RemoraComms::update()
 	{
 		this->noDataCount = 0;
 		this->status = false;
+		this->CommsPin->set(!this->status);
 	}
 
 	this->data = false;

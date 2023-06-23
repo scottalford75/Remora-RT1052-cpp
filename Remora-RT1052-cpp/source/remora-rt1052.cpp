@@ -53,6 +53,8 @@ along with this program; If not, see <http://www.gnu.org/licenses/>.
 #include "modules/module.h"
 #include "modules/blink/blink.h"
 #include "modules/comms/RemoraComms.h"
+#include "modules/stepgen/stepgen.h"
+#include "modules/digitalPin/digitalPin.h"
 
 
 // state machine
@@ -104,6 +106,142 @@ volatile uint16_t* ptrNVMPGInputs;
 volatile mpgData_t* ptrMpgData = &mpgData;
 
 
+// JSON config file stuff
+
+const char defaultConfig[] = DEFAULT_CONFIG;
+
+
+// 512 bytes of metadata in front of actual JSON file
+typedef struct
+{
+  uint32_t crc32;   		// crc32 of JSON
+  uint32_t length;			// length in words for CRC calculation
+  uint32_t jsonLength;  	// length in of JSON config in bytes
+  uint8_t padding[500];
+} metadata_t;
+#define METADATA_LEN    512
+
+volatile bool newJson;
+uint32_t crc32;
+FILE *jsonFile;
+string strJson;
+DynamicJsonDocument doc(JSON_BUFF_SIZE);
+JsonObject thread;
+JsonObject module;
+
+#include "fsl_cache.h"
+
+void jsonFromFlash(std::string json)
+{
+    int c;
+    uint32_t i = 0;
+    uint32_t jsonLength;
+
+    typedef union
+    {
+    	uint8_t buffer[4];
+    	uint32_t length;
+    } buff_t;
+
+    buff_t bufferLength;
+
+    printf("\n1. Loading JSON configuration file from Flash memory\n");
+
+    // read word 0 to determine length to read
+    memcpy(bufferLength.buffer, (void*)JSON_STORAGE_ADDRESS, sizeof(bufferLength));
+    jsonLength = bufferLength.length;
+
+    if (jsonLength == 0xFFFFFFFF)
+    {
+    	printf("Flash storage location is empty - no config file\n");
+    	printf("Using basic default configuration - 3 step generators only\n");
+
+    	jsonLength = sizeof(defaultConfig);
+
+    	json.resize(jsonLength);
+
+		for (i = 0; i < jsonLength; i++)
+		{
+			c = defaultConfig[i];
+			strJson.push_back(c);
+		}
+    }
+    else
+    {
+		json.resize(jsonLength);
+
+		for (i = 0; i < jsonLength; i++)
+		{
+			c = *(uint8_t*)(JSON_STORAGE_ADDRESS + 4 + i);
+			strJson.push_back(c);
+		}
+		printf("\n%s\n", json.c_str());
+    }
+}
+
+
+void deserialiseJSON()
+{
+    printf("\n2. Parsing JSON configuration file\n");
+
+    const char *json = strJson.c_str();
+
+    // parse the json configuration file
+    DeserializationError error = deserializeJson(doc, json);
+
+    printf("Config deserialisation - ");
+
+    switch (error.code())
+    {
+        case DeserializationError::Ok:
+            printf("Deserialization succeeded\n");
+            break;
+        case DeserializationError::InvalidInput:
+            printf("Invalid input!\n");
+            configError = true;
+            break;
+        case DeserializationError::NoMemory:
+            printf("Not enough memory\n");
+            configError = true;
+            break;
+        default:
+            printf("Deserialization failed\n");
+            configError = true;
+            break;
+    }
+}
+
+
+void configThreads()
+{
+    if (configError) return;
+
+    printf("\n3. Configuring threads\n");
+
+    JsonArray Threads = doc["Threads"];
+
+    // create objects from JSON data
+    for (JsonArray::iterator it=Threads.begin(); it!=Threads.end(); ++it)
+    {
+        thread = *it;
+
+        const char* configor = thread["Thread"];
+        uint32_t    freq = thread["Frequency"];
+
+        if (!strcmp(configor,"Base"))
+        {
+            base_freq = freq;
+            printf("Setting BASE thread frequency to %d\n", base_freq);
+        }
+        else if (!strcmp(configor,"Servo"))
+        {
+            servo_freq = freq;
+            printf("Setting SERVO thread frequency to %d\n", servo_freq);
+        }
+    }
+}
+
+
 void loadModules(void)
 {
     printf("\n4. Loading modules\n");
@@ -112,13 +250,43 @@ void loadModules(void)
 	comms = new RemoraComms();
 	servoThread->registerModule(comms);
 
-/*
-	Module* blinkB = new Blink("P1_22", PRU_BASEFREQ, PRU_BASEFREQ);
-	baseThread->registerModule(blinkB);
+    if (configError) return;
 
-	Module* blinkS = new Blink("P1_17", PRU_SERVOFREQ, PRU_SERVOFREQ);
-	servoThread->registerModule(blinkS);
-*/
+    JsonArray Modules = doc["Modules"];
+
+    // create objects from JSON data
+    for (JsonArray::iterator it=Modules.begin(); it!=Modules.end(); ++it)
+    {
+        module = *it;
+
+        const char* thread = module["Thread"];
+        const char* type = module["Type"];
+
+        if (!strcmp(thread,"Base"))
+        {
+            printf("\nBase thread object\n");
+
+            if (!strcmp(type,"Stepgen"))
+            {
+                createStepgen();
+            }
+         }
+        else if (!strcmp(thread,"Servo"))
+        {
+        	if (!strcmp(type,"Digital Pin"))
+			{
+				createDigitalPin();
+			}
+        	else if (!strcmp(type,"Spindle PWM"))
+			{
+				//createSpindlePWM();
+			}
+        	else if (!strcmp(type,"NVMPG"))
+			{
+				//createNVMPG();
+			}
+        }
+    }
 }
 
 
@@ -160,9 +328,9 @@ int main(void)
      		              }
      		              prevState = currentState;
 
-     		              //jsonFromFlash(strJson);
-     		              //deserialiseJSON();
-     		              //configThreads();
+     		              jsonFromFlash(strJson);
+     		              deserialiseJSON();
+     		              configThreads();
      		              createThreads();
      		              //debugThreadHigh();
      		              loadModules();

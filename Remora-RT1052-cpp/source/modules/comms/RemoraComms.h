@@ -7,6 +7,7 @@
 #include "remora.h"
 
 #include "../module.h"
+#include "../../drivers/pin/pin.h"
 
 class RemoraComms : public Module
 {
@@ -16,6 +17,8 @@ class RemoraComms : public Module
 	bool		status;
 
 	uint8_t		noDataCount;
+
+	Pin*		CommsPin;
 
   public:
 
