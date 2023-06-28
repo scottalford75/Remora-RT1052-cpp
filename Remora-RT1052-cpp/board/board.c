@@ -391,6 +391,6 @@ void BOARD_ConfigMPU(void)
     ARM_MPU_Enable(MPU_CTRL_PRIVDEFENA_Msk);
 
     /* Enable I cache and D cache */
-    SCB_EnableDCache();
-    SCB_EnableICache();
+    //SCB_EnableDCache();
+    //SCB_EnableICache();
 }

@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with this program; If not, see <http://www.gnu.org/licenses/>.
 */
 
+
+
 #include "pin_mux.h"
 #include "clock_config.h"
 #include "board.h"
@@ -27,12 +29,17 @@ along with this program; If not, see <http://www.gnu.org/licenses/>.
 #include "lwip/timeouts.h"
 #include "netif/ethernet.h"
 #include "enet_ethernetif.h"
+#include "tftpserver.h"
 
 #include "fsl_gpio.h"
 #include "fsl_iomuxc.h"
 
+#include "flexspi_nor_flash.h"
+
 #include "configuration.h"
 #include "remora.h"
+
+#include "crc32.h"
 
 // libraries
 #include <sys/errno.h>
@@ -129,7 +136,138 @@ DynamicJsonDocument doc(JSON_BUFF_SIZE);
 JsonObject thread;
 JsonObject module;
 
-#include "fsl_cache.h"
+
+int8_t checkJson()
+{
+	metadata_t* meta = (metadata_t*)(XIP_BASE + JSON_UPLOAD_ADDRESS);
+	uint32_t* json = (uint32_t*)(XIP_BASE + JSON_UPLOAD_ADDRESS + METADATA_LEN);
+
+    uint32_t table[256];
+    crc32::generate_table(table);
+    int mod, padding;
+
+	// Check length is reasonable
+	if (meta->length > 2 * SECTOR_SIZE)
+	{
+		newJson = false;
+		printf("JSON Config length incorrect\n");
+		return -1;
+	}
+
+    // for compatability with STM32 hardware CRC32, the config is padded to a 32 byte boundary
+    mod = meta->jsonLength % 4;
+    if (mod > 0)
+    {
+        padding = 4 - mod;
+    }
+    else
+    {
+        padding = 0;
+    }
+    printf("mod = %d, padding = %d\n", mod, padding);
+
+	// Compute CRC
+    crc32 = 0;
+    char* ptr = (char *)(XIP_BASE + JSON_UPLOAD_ADDRESS + METADATA_LEN);
+    for (int i = 0; i < meta->jsonLength + padding; i++)
+    {
+        crc32 = crc32::update(table, crc32, ptr, 1);
+        ptr++;
+    }
+
+	printf("Length (words) = %d\n", meta->length);
+	printf("JSON length (bytes) = %d\n", meta->jsonLength);
+	printf("crc32 = %x\n", crc32);
+
+	// Check CRC
+	if (crc32 != meta->crc32)
+	{
+		newJson = false;
+		printf("JSON Config file CRC incorrect\n");
+		return -1;
+	}
+
+	// JSON is OK, don't check it again
+	newJson = false;
+	printf("JSON Config file received Ok\n");
+	return 1;
+}
+
+
+void moveJson()
+{
+	uint8_t pages, sectors;
+    uint32_t i = 0;
+	metadata_t* meta = (metadata_t*)(XIP_BASE + JSON_UPLOAD_ADDRESS);
+	uint32_t Flash_Write_Address;
+
+	uint16_t jsonLength = meta->jsonLength;
+
+    // how many pages are needed to be written. The first 4 bytes of the storage location will contain the length of the JSON file
+    pages = (meta->jsonLength + 4) / FLASH_PAGE_SIZE;
+    if ((meta->jsonLength + 4) / FLASH_PAGE_SIZE > 0)
+    {
+        pages++;
+    }
+
+    sectors = pages / 16; // 16 pages per sector
+    if (pages%16 > 0)
+    {
+    	sectors++;
+    }
+
+    printf("pages = %d, sectors = %d\n", pages, sectors);
+
+    uint8_t data[pages * 256] = {0};
+
+	// store the length of the file in the 0th word
+    data[0] = (uint8_t)((jsonLength & 0x00FF));
+    data[1] = (uint8_t)((jsonLength & 0xFF00) >> 8);
+
+    //The buffer argument points to the data to be written, which is of size size.
+    //This size must be a multiple of the "page size", which is defined as the constant FLASH_PAGE_SIZE, with a value of 256 bytes.
+
+    for (i = 0; i < jsonLength; i++)
+    {
+        data[i + 4] = *((uint8_t*)(XIP_BASE + JSON_UPLOAD_ADDRESS + METADATA_LEN + i));
+    }
+
+	// erase the old JSON config file
+
+	// init flash
+	flexspi_nor_flash_init(FLEXSPI);
+
+	// Enter quad mode
+	status_t status = flexspi_nor_enable_quad_mode(FLEXSPI);
+	if (status != kStatus_Success)
+	{
+	  return;
+	}
+
+	Flash_Write_Address = JSON_STORAGE_ADDRESS;
+
+	for (i = 0; i < sectors; i++)
+	{
+		status = flexspi_nor_flash_erase_sector(FLEXSPI, Flash_Write_Address + (i * SECTOR_SIZE));
+		if (status != kStatus_Success)
+		{
+		  PRINTF("Erase sector failure !\r\n");
+		  return;
+		}
+	}
+
+	for (i = 0; i < pages; i++)
+	{
+		status_t status = flexspi_nor_flash_page_program(FLEXSPI, Flash_Write_Address + i * FLASH_PAGE_SIZE, (uint32_t *)(data + i * FLASH_PAGE_SIZE));
+		if (status != kStatus_Success)
+		{
+		 PRINTF("Page program failure !\r\n");
+		}
+	}
+
+
+}
+
 
 void jsonFromFlash(std::string json)
 {
@@ -137,19 +275,11 @@ void jsonFromFlash(std::string json)
     uint32_t i = 0;
     uint32_t jsonLength;
 
-    typedef union
-    {
-    	uint8_t buffer[4];
-    	uint32_t length;
-    } buff_t;
-
-    buff_t bufferLength;
 
     printf("\n1. Loading JSON configuration file from Flash memory\n");
 
     // read word 0 to determine length to read
-    memcpy(bufferLength.buffer, (void*)JSON_STORAGE_ADDRESS, sizeof(bufferLength));
-    jsonLength = bufferLength.length;
+    jsonLength = *(uint32_t*)(XIP_BASE + JSON_STORAGE_ADDRESS);
 
     if (jsonLength == 0xFFFFFFFF)
     {
@@ -172,7 +302,7 @@ void jsonFromFlash(std::string json)
 
 		for (i = 0; i < jsonLength; i++)
 		{
-			c = *(uint8_t*)(JSON_STORAGE_ADDRESS + 4 + i);
+			c = *(uint8_t*)(XIP_BASE + JSON_STORAGE_ADDRESS + 4 + i);
 			strJson.push_back(c);
 		}
 		printf("\n%s\n", json.c_str());
@@ -316,7 +446,6 @@ int main(void)
 
     initEthernet();
 
-
     while (1)
     {
  	   switch(currentState){
@@ -336,7 +465,7 @@ int main(void)
      		              loadModules();
      		              //debugThreadLow();
      		              udpServer_init();
-     		              //IAP_tftpd_init();
+     		              IAP_tftpd_init();
 
      		              currentState = ST_START;
      		              break;
@@ -353,10 +482,10 @@ int main(void)
      		              {
      		                  // Start the threads
      		                  printf("\nStarting the BASE thread\n");
-     		                  baseThread->startThread();
+     		                  //baseThread->startThread();
 
      		                  printf("\nStarting the SERVO thread\n");
-     		                  servoThread->startThread();
+     		                  //servoThread->startThread();
 
      		                  threadsRunning = true;
      		              }
@@ -433,10 +562,22 @@ int main(void)
 
      		          case ST_WDRESET:
      		        	  // force a reset
-     		        	  //HAL_NVIC_SystemReset();
+     		        	  //NVIC_SystemReset();
      		              break;
      		  }
 
         EthernetTasks();
+
+        if (newJson)
+		{
+			printf("\n\nChecking new configuration file\n");
+
+			if (checkJson() > 0)
+			{
+				printf("Moving new configuration file to Flash storage and reset\n");
+				moveJson();
+				NVIC_SystemReset();
+			}
+		}
     }
 }
