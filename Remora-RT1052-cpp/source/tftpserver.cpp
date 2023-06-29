@@ -23,6 +23,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "configuration.h"
+#include "extern.h"
 
 
 /* Private variables ---------------------------------------------------------*/
@@ -264,17 +265,14 @@ static int IAP_tftp_process_write(struct udp_pcb *upcb, const ip_addr_t *to, int
 
   total_count =0;
 
-
   // Get ready to upload configuration
-  // Disable to cache
-  //SCB_DisableDCache();
-  //SCB_DisableICache();
 
   // Stop the threads
-  // TODO
+  printf("\n Receiving new configuration. Stopping threads..\n")
+  baseThread->stopThread();
+  servoThread->stopThread();
 
   /* init flash */
-  /////FLASH_If_Init();
   flexspi_nor_flash_init(FLEXSPI);
 
   /* Enter quad mode. */

@@ -205,13 +205,13 @@ void moveJson()
 
     // how many pages are needed to be written. The first 4 bytes of the storage location will contain the length of the JSON file
     pages = (meta->jsonLength + 4) / FLASH_PAGE_SIZE;
-    if ((meta->jsonLength + 4) / FLASH_PAGE_SIZE > 0)
+    if ((meta->jsonLength + 4) % FLASH_PAGE_SIZE > 0)
     {
         pages++;
     }
 
     sectors = pages / 16; // 16 pages per sector
-    if (pages%16 > 0)
+    if (pages % 16 > 0)
     {
     	sectors++;
     }
@@ -482,10 +482,10 @@ int main(void)
      		              {
      		                  // Start the threads
      		                  printf("\nStarting the BASE thread\n");
-     		                  //baseThread->startThread();
+     		                  baseThread->startThread();
 
      		                  printf("\nStarting the SERVO thread\n");
-     		                  //servoThread->startThread();
+     		                  servoThread->startThread();
 
      		                  threadsRunning = true;
      		              }
