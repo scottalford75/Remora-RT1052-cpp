@@ -268,7 +268,7 @@ static int IAP_tftp_process_write(struct udp_pcb *upcb, const ip_addr_t *to, int
   // Get ready to upload configuration
 
   // Stop the threads
-  printf("\n Receiving new configuration. Stopping threads..\n")
+  printf("\nReceiving new configuration. Stopping threads..\n");
   baseThread->stopThread();
   servoThread->stopThread();
 

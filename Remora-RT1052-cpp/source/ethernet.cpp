@@ -19,15 +19,8 @@
 
 #include "configuration.h"
 #include "remora.h"
-#include "modules/comms/RemoraComms.h"
+#include "extern.h"
 
-extern rxData_t rxBuffer;
-extern volatile rxData_t rxData;
-extern volatile txData_t txData;
-extern volatile bool cmdReceived;
-extern volatile bool mpgReceived;
-
-extern RemoraComms* comms;
 
 static mdio_handle_t mdioHandle = {.ops = &enet_ops};
 static phy_handle_t phyHandle   = {.phyAddr = BOARD_ENET0_PHY_ADDRESS, .mdioHandle = &mdioHandle, .ops = &phylan8720a_ops};
@@ -175,6 +168,7 @@ void udp_mpg_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_
 
 	if (mpgData.header == PRU_NVMPG)
 	{
-		mpgReceived = true;
+		// use a standard module interface to trigger the update of the MPG
+		MPG->configure();
 	}
 }

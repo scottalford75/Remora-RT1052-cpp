@@ -7,6 +7,7 @@
 #include "../source/lib/ArduinoJson6/ArduinoJson.h"
 #include "../source/thread/pruThread.h"
 
+#include "modules/comms/RemoraComms.h"
 
 extern uint32_t base_freq;
 extern uint32_t servo_freq;
@@ -18,9 +19,11 @@ extern volatile bool PRUreset;
 // pointers to objects with global scope
 extern pruThread* baseThread;
 extern pruThread* servoThread;
+extern RemoraComms* comms;
 extern Module* MPG;
 
 // unions for RX and TX data
+extern rxData_t rxBuffer;
 extern volatile rxData_t rxData;
 extern volatile txData_t txData;
 extern mpgData_t mpgData;

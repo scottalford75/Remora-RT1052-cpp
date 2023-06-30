@@ -62,6 +62,7 @@ along with this program; If not, see <http://www.gnu.org/licenses/>.
 #include "modules/comms/RemoraComms.h"
 #include "modules/stepgen/stepgen.h"
 #include "modules/digitalPin/digitalPin.h"
+#include "modules/nvmpg/nvmpg.h"
 
 
 // state machine
@@ -88,6 +89,7 @@ bool threadsRunning = false;
 pruThread* servoThread;
 pruThread* baseThread;
 RemoraComms* comms;
+Module* MPG;
 
 // unions for RX, TX and MPG data
 rxData_t rxBuffer;				// temporary RX buffer
@@ -262,9 +264,11 @@ void moveJson()
 		if (status != kStatus_Success)
 		{
 		 PRINTF("Page program failure !\r\n");
+		 return;
 		}
 	}
 
+	printf("Configuration file moved\n");
 
 }
 
@@ -413,10 +417,11 @@ void loadModules(void)
 			}
         	else if (!strcmp(type,"NVMPG"))
 			{
-				//createNVMPG();
+				createNVMPG();
 			}
         }
     }
+    doc.clear();
 }
 
 
