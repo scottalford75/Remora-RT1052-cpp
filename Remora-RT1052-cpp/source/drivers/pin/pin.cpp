@@ -59,7 +59,7 @@ Pin::Pin(std::string portAndPin, int dir) :
     }
     else if (this->port == 4)
     {
-    	this->GPIOx = GPIO3;
+    	this->GPIOx = GPIO4;
     }
 
     GPIO_PinInit(this->GPIOx, this->pin, &this->config);
