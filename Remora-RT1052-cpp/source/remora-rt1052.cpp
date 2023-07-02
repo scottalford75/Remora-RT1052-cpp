@@ -60,6 +60,7 @@ along with this program; If not, see <http://www.gnu.org/licenses/>.
 #include "modules/module.h"
 #include "modules/blink/blink.h"
 #include "modules/comms/RemoraComms.h"
+#include "modules/pwm/spindlePWM.h"
 #include "modules/stepgen/stepgen.h"
 #include "modules/digitalPin/digitalPin.h"
 #include "modules/nvmpg/nvmpg.h"
@@ -413,7 +414,7 @@ void loadModules(void)
 			}
         	else if (!strcmp(type,"Spindle PWM"))
 			{
-				//createSpindlePWM();
+				createSpindlePWM();
 			}
         	else if (!strcmp(type,"NVMPG"))
 			{
@@ -421,7 +422,6 @@ void loadModules(void)
 			}
         }
     }
-    doc.clear();
 }
 
 

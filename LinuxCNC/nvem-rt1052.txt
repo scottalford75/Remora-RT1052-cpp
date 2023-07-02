@@ -374,6 +374,12 @@
 	},
 	{
 	"Thread": "Servo",
+	"Type": "Spindle PWM",
+		"Comment":			"Spindle PWM",
+		"SP[i]":			0
+	},
+	{
+	"Thread": "Servo",
 	"Type": "NVMPG",
 		"Comment":			"NVMPG"
 	}
