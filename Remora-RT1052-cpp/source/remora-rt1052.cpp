@@ -59,6 +59,7 @@ along with this program; If not, see <http://www.gnu.org/licenses/>.
 // modules
 #include "modules/module.h"
 #include "modules/blink/blink.h"
+#include "modules/encoder/encoder.h"
 #include "modules/comms/RemoraComms.h"
 #include "modules/pwm/spindlePWM.h"
 #include "modules/stepgen/stepgen.h"
@@ -404,6 +405,10 @@ void loadModules(void)
             if (!strcmp(type,"Stepgen"))
             {
                 createStepgen();
+            }
+            else if (!strcmp(type,"Encoder"))
+            {
+                createEncoder();
             }
          }
         else if (!strcmp(thread,"Servo"))
