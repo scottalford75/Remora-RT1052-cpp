@@ -1,6 +1,6 @@
 #include "spindlePwm.h"
 
-// Module for NVMEM spindle RPM on pin PA_0
+// Module for RT1052 spindle RPM on pin GPIO1_IO08
 
 /***********************************************************************
                 MODULE CONFIGURATION AND CREATION FROM JSON
