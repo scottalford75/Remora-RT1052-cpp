@@ -59,6 +59,8 @@ along with this program; If not, see <http://www.gnu.org/licenses/>.
 // modules
 #include "modules/module.h"
 #include "modules/blink/blink.h"
+#include "modules/debug/debug.h"
+#include "modules/DMAstepgen/DMAstepgen.h"
 #include "modules/encoder/encoder.h"
 #include "modules/comms/RemoraComms.h"
 #include "modules/pwm/spindlePWM.h"
@@ -86,6 +88,15 @@ uint32_t servo_freq = PRU_SERVOFREQ;
 volatile bool PRUreset;
 bool configError = false;
 bool threadsRunning = false;
+
+
+// DMA stepgen double buffers
+int32_t stepgenDMAbuffer_0[DMA_BUFFER_SIZE];		// double buffers for port DMA transfers
+int32_t stepgenDMAbuffer_1[DMA_BUFFER_SIZE];
+vector<Module*> vDMAthread;
+vector<Module*>::iterator iterDMA;
+bool DMAstepgen = false;
+bool stepgenDMAbuffer = false;					// indicates which double buffer to use 0 or 1
 
 // pointers to objects with global scope
 pruThread* servoThread;
@@ -158,7 +169,7 @@ int8_t checkJson()
 		return -1;
 	}
 
-    // for compatability with STM32 hardware CRC32, the config is padded to a 32 byte boundary
+    // for compatibility with STM32 hardware CRC32, the config is padded to a 32 byte boundary
     mod = meta->jsonLength % 4;
     if (mod > 0)
     {
@@ -398,7 +409,17 @@ void loadModules(void)
         const char* thread = module["Thread"];
         const char* type = module["Type"];
 
-        if (!strcmp(thread,"Base"))
+        if (!strcmp(thread,"DMA"))
+        {
+            printf("\nDMA thread object\n");
+
+            if (!strcmp(type,"DMAstepgen"))
+            {
+            	createDMAstepgen();
+            	DMAstepgen = true;
+            }
+        }
+        else if (!strcmp(thread,"Base"))
         {
             printf("\nBase thread object\n");
 
@@ -427,6 +448,24 @@ void loadModules(void)
 			}
         }
     }
+}
+
+void debugThreadHigh()
+{
+    //Module* debugOnB = new Debug("PE_13", 1);
+    //baseThread->registerModule(debugOnB);
+
+    Module* debugOnS = new Debug("P1_22", 1);
+    servoThread->registerModule(debugOnS);
+}
+
+void debugThreadLow()
+{
+    //Module* debugOffB = new Debug("PE_13", 0);
+    //baseThread->registerModule(debugOffB);
+
+    Module* debugOffS = new Debug("P1_22", 0);
+    servoThread->registerModule(debugOffS);
 }
 
 
@@ -471,9 +510,9 @@ int main(void)
      		              deserialiseJSON();
      		              configThreads();
      		              createThreads();
-     		              //debugThreadHigh();
+     		              debugThreadHigh();
      		              loadModules();
-     		              //debugThreadLow();
+     		              debugThreadLow();
      		              udpServer_init();
      		              IAP_tftpd_init();
 

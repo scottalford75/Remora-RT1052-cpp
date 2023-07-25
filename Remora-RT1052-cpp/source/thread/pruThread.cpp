@@ -46,6 +46,7 @@ void pruThread::run(void)
 	for (iter = vThread.begin(); iter != vThread.end(); ++iter) (*iter)->runModule();
 
 	// iterate over the second vector that contains module pointers to run after (post) the main vector
+
 	if (hasThreadPost)
 	{
 		for (iter = vThreadPost.begin(); iter != vThreadPost.end(); ++iter) (*iter)->runModulePost();
