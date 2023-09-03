@@ -66,6 +66,7 @@ DMAstepgen::DMAstepgen(int32_t threadFreq, int jointNumber, std::string step, st
 	this->stepLow = 0;
 	this->mask = 1 << this->jointNumber;
 	this->isEnabled = false;
+	this->dir = false;
 	//this->isForward = false;
 
 	// determine the step pin number from the portAndPin string
@@ -102,9 +103,25 @@ void DMAstepgen::slowUpdate()
 
 void DMAstepgen::makePulses()
 {
+	/*
+	(1) steplen
+	(2) stepspace
+	(3) dirhold
+	(4) dirsetup
+
+			   _____         _____               _____
+	STEP  ____/     \_______/     \_____________/     \______
+			  |     |       |     |             |     |
+	Time      |-(1)-|--(2)--|-(1)-|--(3)--|-(4)-|-(1)-|
+										  |__________________
+	DIR   ________________________________/
+
+	 */
+
+
 	//this->isEnabled = ((*(this->ptrJointEnable) & this->mask) != 0);
 
-	if (this->isEnabled == true)  												// this Step generator is enables so make the pulses
+	if (this->isEnabled == true)  												// this Step generator is enabled so make the pulses
 	{
 		this->oldaddValue = this->addValue;
 		//this->frequencyCommand = *(this->ptrFrequencyCommand);            		// Get the latest frequency command via pointer to the data source
@@ -126,63 +143,102 @@ void DMAstepgen::makePulses()
 			// put step low into DMA buffer
 			*(stepDMAbuffer + this->stepLow - 1) |= this->stepMask;
 			this->stepLow = 0;
-
 		}
 
-		if (this->addValue <= BUFFER_COUNTS)
+		// what's the direction for this period
+		if (this->frequencyCommand < 0)
 		{
-			//printf("stepping...\n\r");
-
-			// 1 or more steps in this servo period
-
-			this->remainder = BUFFER_COUNTS - this->prevRemainder;
-
-			//this->debug->set(1);
-
-			while(this->remainder >= this->addValue)
-			{
-				// we can still step in this servo period
-				this->accumulator = this->accumulator + this->addValue;
-				this->remainder = BUFFER_COUNTS - this->accumulator;
-				this->stepPos = this->accumulator / (RESOLUTION / 2);
-
-				// map stepPos (1 - 500) to DMA buffer (0 - 999)
-
-				this->stepHigh = this->stepPos;// - 2;
-				this->stepLow = this->stepHigh + 1;
-
-				//printf("acc = %ld, rem = %ld, stepH = %d, stepL = %d\n\r", this->accumulator, this->remainder, this->stepHigh, this->stepLow);
-
-				// put step high into DMA buffer
-				*(stepDMAbuffer + this->stepHigh) |= this->stepMask;
-				this->stepHigh = 0;
-
-				// put step low into DMA buffer
-				// step low could be in the next period (buffer)
-				if (this->stepLow <= DMA_BUFFER_SIZE - 1)
-				{
-					// put step low into DMA buffer
-					*(stepDMAbuffer + this->stepLow) |= this->stepMask;
-					this->stepLow = 0;
-				}
-				else
-				{
-					this->stepLow = this->stepLow - DMA_BUFFER_SIZE;
-				}
-
-			}
-
-			//this->debug->set(0);
-
-			// reset accumulator and carry remainder into the next servo period
-			this->accumulator = 0;
-			this->prevRemainder = this->remainder;
+			this->dir = false; // backwards
 		}
 		else
 		{
-			// 1 or no steps in this servo period
-
+			this->dir = true; // forwards
 		}
+
+		// change of direction?
+		if (this->dir != this->oldDir)
+		{
+			// TODO set the dirHold and dirSetup
+
+			// toggle the direction pin
+			*stepDMAbuffer |= this->dirMask;
+			this->oldDir = this->dir;
+		}
+
+
+		if (this->addValue <= BUFFER_COUNTS)
+		{
+			// >1 steps in this period
+			this->remainder = BUFFER_COUNTS - this->prevRemainder;
+
+			while (this->remainder >= this->addValue)
+			{
+				// we can still step in this period
+				this->accumulator = this->accumulator + this->addValue;
+				this->remainder = BUFFER_COUNTS - this->accumulator;
+
+				this->makeStep();
+			}
+
+			// reset accumulator and carry remainder into the next period
+			this->accumulator = 0;
+			this->prevRemainder = this->remainder;
+		}
+		else if ((this->addValue - this->prevRemainder) < BUFFER_COUNTS)
+		{
+			// 1 step in this period
+			this->accumulator = this->addValue - this->prevRemainder;
+
+			this->makeStep();
+
+			// reset accumulator and carry remainder into the next period
+			this->accumulator = 0;
+			this->prevRemainder = BUFFER_COUNTS - this->accumulator;
+		}
+		else
+		{
+			// no steps in this period
+			this->prevRemainder = this->prevRemainder + BUFFER_COUNTS;
+		}
+	}
+}
+
+
+void DMAstepgen::makeStep()
+{
+	// map stepPos (1 - 500) to DMA buffer (0 - 999)
+	this->stepPos = this->accumulator / (RESOLUTION / 2);
+	this->stepHigh = this->stepPos - 2;
+	this->stepLow = this->stepHigh + 1;
+	// TODO incorporate step length setting, which will impact max frequency / minimum add value
+
+	//printf("acc = %ld, rem = %ld, stepH = %d, stepL = %d\n\r", this->accumulator, this->remainder, this->stepHigh, this->stepLow);
+
+	// put step high into DMA buffer
+	*(stepDMAbuffer + this->stepHigh) |= this->stepMask;
+	this->stepHigh = 0;
+
+	// update the raw step count
+	if (this->dir)
+	{
+		this->rawCount++;
+	}
+	else
+	{
+		this->rawCount--;
+	}
+
+	// put step low into DMA buffer
+	// step low could be in the next period (buffer)
+	if (this->stepLow <= DMA_BUFFER_SIZE - 1)
+	{
+		// put step low into DMA buffer
+		*(stepDMAbuffer + this->stepLow) |= this->stepMask;
+		this->stepLow = 0;
+	}
+	else
+	{
+		this->stepLow = this->stepLow - DMA_BUFFER_SIZE;
 	}
 }
 
