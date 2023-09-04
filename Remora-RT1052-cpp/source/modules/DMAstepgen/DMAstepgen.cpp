@@ -135,6 +135,7 @@ void DMAstepgen::makePulses()
 		else // buffer_1
 		{
 			stepDMAbuffer = stepDMAbuffer_1;
+			this->addValue = this->addValue*2;
 		}
 
 		// finish the step from the previous period if needed

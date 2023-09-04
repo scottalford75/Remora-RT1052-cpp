@@ -492,6 +492,8 @@ extern "C" {
 
 void DMAconfig(void)
 {
+	// Use the Periodic Interrupt Timer to trigger the DMA transfer to the GPIO DR_TOGGLE register
+
 	edma_transfer_config_t transferConfig;
 	edma_config_t userConfig;
 	pit_config_t pitConfig;
@@ -519,12 +521,13 @@ void DMAconfig(void)
 	EDMA_SetCallback(&g_EDMA_Handle, EDMA_Callback, NULL);
 	EDMA_ResetChannel(g_EDMA_Handle.base, g_EDMA_Handle.channel);
 
-	/* prepare descroptor 0 */
+	/* prepare descriptor 0 */
 	EDMA_PrepareTransfer(&transferConfig, stepgenDMAbuffer_0, sizeof(stepgenDMAbuffer_0[0]), &GPIO1->DR_TOGGLE, sizeof(GPIO1->DR_TOGGLE),
 						 sizeof(stepgenDMAbuffer_0[0]),
 						 sizeof(stepgenDMAbuffer_0[0]) * DMA_BUFFER_SIZE,
 						 kEDMA_MemoryToPeripheral);
 	EDMA_TcdSetTransferConfig(tcdMemoryPoolPtr, &transferConfig, &tcdMemoryPoolPtr[1]);
+	EDMA_TcdEnableInterrupts(&tcdMemoryPoolPtr[0], kEDMA_MajorInterruptEnable);
 
 	/* prepare descriptor 1 */
 	EDMA_PrepareTransfer(&transferConfig, stepgenDMAbuffer_1, sizeof(stepgenDMAbuffer_1[0]), &GPIO1->DR_TOGGLE, sizeof(GPIO1->DR_TOGGLE),
@@ -558,7 +561,11 @@ int main(void)
 
     printf("\nRemora RT1052 starting\n\n");
 
-    DMAconfig(); // put this in the right place
+
+    Module* debugOn1 = new Debug("P1_17", 1);
+    Module* debugOff1 = new Debug("P1_17", 0);
+    Module* debugOn2 = new Debug("P1_31", 1);
+    Module* debugOff2 = new Debug("P1_31", 0);
 
     initEthernet();
 
@@ -602,6 +609,8 @@ int main(void)
 
      		                  printf("\nStarting the SERVO thread\n");
      		                  servoThread->startThread();
+
+     		                  DMAconfig(); // put this in the right place+
 
      		                  threadsRunning = true;
      		              }
@@ -687,23 +696,39 @@ int main(void)
 
     	if (g_transferDone)
     	{
+
+
     		// clear the DMA buffer ready for next use
     		if (stepgenDMAbuffer)
     		{
+    			debugOn1->update();
     			memset(stepgenDMAbuffer_0, 0, sizeof(stepgenDMAbuffer_0));
+
+    			// switch buffers
+    			stepgenDMAbuffer = !stepgenDMAbuffer;
+
+        		// prepare the next DMA buffer
+        		for (iterDMA = vDMAthread.begin(); iterDMA != vDMAthread.end(); ++iterDMA) (*iterDMA)->runModule();
+        		debugOff1->update();
     		}
     		else
     		{
+    			debugOn2->update();
     			memset(stepgenDMAbuffer_1, 0, sizeof(stepgenDMAbuffer_1));
+
+    			// switch buffers
+    			stepgenDMAbuffer = !stepgenDMAbuffer;
+
+        		// prepare the next DMA buffer
+        		for (iterDMA = vDMAthread.begin(); iterDMA != vDMAthread.end(); ++iterDMA) (*iterDMA)->runModule();
+        		debugOff2->update();
     		}
 
-			// switch buffers
-			stepgenDMAbuffer = !stepgenDMAbuffer;
 
-    		// prepare the next DMA buffer
-    		for (iterDMA = vDMAthread.begin(); iterDMA != vDMAthread.end(); ++iterDMA) (*iterDMA)->runModule();
 
     		g_transferDone = false;
+
+
     	}
 
 
