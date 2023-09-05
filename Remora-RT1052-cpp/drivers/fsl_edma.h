@@ -258,9 +258,10 @@ typedef struct _edma_handle
 /*******************************************************************************
  * APIs
  ******************************************************************************/
+
 #if defined(__cplusplus)
 extern "C" {
-#endif /* __cplusplus */
+#endif /* _cplusplus */
 
 /*!
  * @name eDMA initialization and de-initialization
