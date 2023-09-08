@@ -48,7 +48,12 @@ DMAstepgen::DMAstepgen(int32_t threadFreq, int jointNumber, std::string step, st
 	stepDMAbuffer_0 = &stepgenDMAbuffer_0[0];
 	stepDMAbuffer_1 = &stepgenDMAbuffer_1[0];
 	stepDMAactiveBuffer = &stepgenDMAbuffer;
-	this->frequencyCommand = 500000;
+	//this->frequencyCommand = 500000;
+
+	//if (this->jointNumber == 1)
+//	{
+//		this->frequencyCommand = 431125;
+//	}
 
 
 	dirDMAbuffer_0 = &stepgenDMAbuffer_0[0];
@@ -58,10 +63,8 @@ DMAstepgen::DMAstepgen(int32_t threadFreq, int jointNumber, std::string step, st
 
 	this->stepPin = new Pin(this->step, OUTPUT);
 	this->directionPin = new Pin(this->direction, OUTPUT);
-	//this->debug = new Pin("PE_10", OUTPUT);
 	this->accumulator = 0;
 	this->remainder = 0;
-	//this->prevRemainder = BUFFER_COUNTS;
 	this->prevRemainder = 0;
 	this->stepLow = 0;
 	this->mask = 1 << this->jointNumber;
@@ -81,7 +84,7 @@ DMAstepgen::DMAstepgen(int32_t threadFreq, int jointNumber, std::string step, st
 	if (pin2 <= 8) pin = pin * 10 + pin2;
 	this->dirMask = 1 << pin;
 
-	this->isEnabled = true; // TESTING!!! to be removed
+	//this->isEnabled = true; // TESTING!!! to be removed
 }
 
 
@@ -119,88 +122,94 @@ void DMAstepgen::makePulses()
 	 */
 
 
-	//this->isEnabled = ((*(this->ptrJointEnable) & this->mask) != 0);
+	this->isEnabled = ((*(this->ptrJointEnable) & this->mask) != 0);
 
 	if (this->isEnabled == true)  												// this Step generator is enabled so make the pulses
 	{
-		this->oldaddValue = this->addValue;
-		//this->frequencyCommand = *(this->ptrFrequencyCommand);            		// Get the latest frequency command via pointer to the data source
-		this->addValue = (BUFFER_COUNTS * PRU_SERVOFREQ) / abs(this->frequencyCommand);		// determine the add value from the commanded frequency ratio
-
-		// determine which double buffer to fill
-		if (!*stepDMAactiveBuffer)	// false = buffer_0
+		this->frequencyCommand = *(this->ptrFrequencyCommand);            		// Get the latest frequency command via pointer to the data source
+		if (this->frequencyCommand != 0)
 		{
-			stepDMAbuffer = stepDMAbuffer_0;
-		}
-		else // buffer_1
-		{
-			stepDMAbuffer = stepDMAbuffer_1;
-			this->addValue = this->addValue*2;
-		}
+			this->oldaddValue = this->addValue;
+			this->addValue = (BUFFER_COUNTS * PRU_SERVOFREQ) / abs(this->frequencyCommand);		// determine the add value from the commanded frequency ratio
 
-		// finish the step from the previous period if needed
-		if (this->stepLow != 0)
-		{
-			// put step low into DMA buffer
-			*(stepDMAbuffer + this->stepLow - 1) |= this->stepMask;
-			this->stepLow = 0;
-		}
-
-		// what's the direction for this period
-		if (this->frequencyCommand < 0)
-		{
-			this->dir = false; // backwards
-		}
-		else
-		{
-			this->dir = true; // forwards
-		}
-
-		// change of direction?
-		if (this->dir != this->oldDir)
-		{
-			// TODO set the dirHold and dirSetup
-
-			// toggle the direction pin
-			*stepDMAbuffer |= this->dirMask;
-			this->oldDir = this->dir;
-		}
-
-
-		if (this->addValue <= BUFFER_COUNTS)
-		{
-			// >1 steps in this period
-			this->remainder = BUFFER_COUNTS - this->prevRemainder;
-
-			while (this->remainder >= this->addValue)
+			// determine which ping-pong buffer to fill
+			if (!*stepDMAactiveBuffer)	// false = buffer_0
 			{
-				// we can still step in this period
-				this->accumulator = this->accumulator + this->addValue;
-				this->remainder = BUFFER_COUNTS - this->accumulator;
-
-				this->makeStep();
+				stepDMAbuffer = stepDMAbuffer_0;
+			}
+			else // buffer_1
+			{
+				stepDMAbuffer = stepDMAbuffer_1;
 			}
 
-			// reset accumulator and carry remainder into the next period
-			this->accumulator = 0;
-			this->prevRemainder = this->remainder;
-		}
-		else if ((this->addValue - this->prevRemainder) < BUFFER_COUNTS)
-		{
-			// 1 step in this period
-			this->accumulator = this->addValue - this->prevRemainder;
+			// finish the step from the previous period if needed
+			if (this->stepLow != 0)
+			{
+				// put step low into DMA buffer
+				*(stepDMAbuffer + this->stepLow - 1) |= this->stepMask;
+				this->stepLow = 0;
+			}
 
-			this->makeStep();
+			// what's the direction for this period
+			if (this->frequencyCommand < 0)
+			{
+				this->dir = false; // backwards
+			}
+			else
+			{
+				this->dir = true; // forwards
+			}
 
-			// reset accumulator and carry remainder into the next period
-			this->accumulator = 0;
-			this->prevRemainder = BUFFER_COUNTS - this->accumulator;
+			// change of direction?
+			if (this->dir != this->oldDir)
+			{
+				// TODO set the dirHold and dirSetup
+
+				// toggle the direction pin
+				*stepDMAbuffer |= this->dirMask;
+				this->oldDir = this->dir;
+			}
+
+			// accumulator cannot go negative, so keep prevRemainder within limits
+			if (this->prevRemainder > this->addValue)
+			{
+				this->prevRemainder = this->addValue;
+			}
+
+			if (this->addValue - this->prevRemainder <= BUFFER_COUNTS)
+			{
+				// at least one step in this period
+
+				this->accumulator = this->addValue - this->prevRemainder;
+				this->remainder = BUFFER_COUNTS - this->accumulator;
+				this->makeStep();
+
+				while (this->remainder >= this->addValue)
+				{
+					// we can still step in this period
+					this->accumulator = this->accumulator + this->addValue;
+					this->remainder = BUFFER_COUNTS - this->accumulator;
+
+					this->makeStep();
+				}
+
+				// reset accumulator and carry remainder into the next period
+				this->accumulator = 0;
+				this->prevRemainder = this->remainder;
+
+				// update DDS accumulator (for compatability with software stepgen)
+				this->DDSaccumulator = this->rawCount << this->stepBit;
+				*(this->ptrFeedback) = this->DDSaccumulator;                     // Update position feedback via pointer to the data receiver
+			}
+			else
+			{
+				this->prevRemainder = this->prevRemainder + BUFFER_COUNTS;
+			}
 		}
-		else
-		{
-			// no steps in this period
-			this->prevRemainder = this->prevRemainder + BUFFER_COUNTS;
-		}
+	}
+	else
+	{
+		this->prevRemainder = 0;
 	}
 }
 
