@@ -277,6 +277,9 @@ static int IAP_tftp_process_write(struct udp_pcb *upcb, const ip_addr_t *to, int
   EDMA_ResetChannel(edma_handle.base, edma_handle.channel);
   EDMA_Deinit(DMA0);
 
+  DMAMUX_DisableChannel(DMAMUX, 0);
+  DMAMUX_Deinit(DMAMUX);
+
   /* init flash */
   flexspi_nor_flash_init(FLEXSPI);
 
