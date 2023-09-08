@@ -23,6 +23,9 @@
 #include "lwip/mem.h"
 #include "lwip/udp.h"
 
+#include "fsl_dmamux.h"
+#include "fsl_edma.h"
+
 
 
 #define TFTP_OPCODE_LEN         2
@@ -83,7 +86,7 @@ typedef enum {
 extern "C" {
 #endif
 
-void IAP_tftpd_init(void);
+void IAP_tftpd_init(edma_handle_t);
 
 #ifdef __cplusplus
 }
