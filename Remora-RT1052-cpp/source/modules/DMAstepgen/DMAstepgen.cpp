@@ -50,6 +50,11 @@ DMAstepgen::DMAstepgen(int32_t threadFreq, int jointNumber, std::string step, st
 	stepDMAactiveBuffer = &stepgenDMAbuffer;
 	this->frequencyCommand = 500000;
 
+	if (this->jointNumber == 1)
+	{
+		this->frequencyCommand = 431125;
+	}
+
 
 	dirDMAbuffer_0 = &stepgenDMAbuffer_0[0];
 	dirDMAbuffer_1 = &stepgenDMAbuffer_1[0];
@@ -135,7 +140,6 @@ void DMAstepgen::makePulses()
 		else // buffer_1
 		{
 			stepDMAbuffer = stepDMAbuffer_1;
-			this->addValue = this->addValue*2;
 		}
 
 		// finish the step from the previous period if needed
@@ -166,10 +170,36 @@ void DMAstepgen::makePulses()
 			this->oldDir = this->dir;
 		}
 
-
-		if (this->addValue <= BUFFER_COUNTS)
+		if (this->addValue - this->prevRemainder <= BUFFER_COUNTS)
 		{
-			// >1 steps in this period
+			// at least one step in this period
+
+			this->accumulator = this->addValue - this->prevRemainder;
+			this->remainder = BUFFER_COUNTS - this->accumulator;
+			this->makeStep();
+
+			while (this->remainder >= this->addValue)
+			{
+				// we can still step in this period
+				this->accumulator = this->accumulator + this->addValue;
+				this->remainder = BUFFER_COUNTS - this->accumulator;
+
+				this->makeStep();
+			}
+
+			// reset accumulator and carry remainder into the next period
+			this->accumulator = 0;
+			this->prevRemainder = this->remainder;
+		}
+		else
+		{
+			this->prevRemainder = this->prevRemainder +  BUFFER_COUNTS;
+		}
+
+
+/*		if ((this->addValue + this->prevRemainder) <= BUFFER_COUNTS)
+		{
+			// more than 1 steps in this period
 			this->remainder = BUFFER_COUNTS - this->prevRemainder;
 
 			while (this->remainder >= this->addValue)
@@ -200,7 +230,7 @@ void DMAstepgen::makePulses()
 		{
 			// no steps in this period
 			this->prevRemainder = this->prevRemainder + BUFFER_COUNTS;
-		}
+		}*/
 	}
 }
 

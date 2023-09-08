@@ -562,10 +562,10 @@ int main(void)
     printf("\nRemora RT1052 starting\n\n");
 
 
-    Module* debugOn1 = new Debug("P1_17", 1);
-    Module* debugOff1 = new Debug("P1_17", 0);
-    Module* debugOn2 = new Debug("P1_31", 1);
-    Module* debugOff2 = new Debug("P1_31", 0);
+    //Module* debugOn1 = new Debug("P1_17", 1);
+    //Module* debugOff1 = new Debug("P1_17", 0);
+    //Module* debugOn2 = new Debug("P1_31", 1);
+    //Module* debugOff2 = new Debug("P1_31", 0);
 
     initEthernet();
 
@@ -701,34 +701,20 @@ int main(void)
     		// clear the DMA buffer ready for next use
     		if (stepgenDMAbuffer)
     		{
-    			debugOn1->update();
     			memset(stepgenDMAbuffer_0, 0, sizeof(stepgenDMAbuffer_0));
-
-    			// switch buffers
-    			stepgenDMAbuffer = !stepgenDMAbuffer;
-
-        		// prepare the next DMA buffer
-        		for (iterDMA = vDMAthread.begin(); iterDMA != vDMAthread.end(); ++iterDMA) (*iterDMA)->runModule();
-        		debugOff1->update();
     		}
     		else
     		{
-    			debugOn2->update();
     			memset(stepgenDMAbuffer_1, 0, sizeof(stepgenDMAbuffer_1));
-
-    			// switch buffers
-    			stepgenDMAbuffer = !stepgenDMAbuffer;
-
-        		// prepare the next DMA buffer
-        		for (iterDMA = vDMAthread.begin(); iterDMA != vDMAthread.end(); ++iterDMA) (*iterDMA)->runModule();
-        		debugOff2->update();
     		}
 
+			// switch buffers
+			stepgenDMAbuffer = !stepgenDMAbuffer;
 
+    		// prepare the next DMA buffer
+    		for (iterDMA = vDMAthread.begin(); iterDMA != vDMAthread.end(); ++iterDMA) (*iterDMA)->runModule();
 
     		g_transferDone = false;
-
-
     	}
 
 
