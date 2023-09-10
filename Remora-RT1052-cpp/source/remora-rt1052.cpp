@@ -61,7 +61,7 @@ along with this program; If not, see <http://www.gnu.org/licenses/>.
 // modules
 #include "modules/module.h"
 #include "modules/blink/blink.h"
-#include "modules/debug/debug.h"
+//#include "modules/debug/debug.h"
 #include "modules/DMAstepgen/DMAstepgen.h"
 #include "modules/encoder/encoder.h"
 #include "modules/comms/RemoraComms.h"
@@ -455,7 +455,7 @@ void loadModules(void)
     }
 }
 
-void debugThreadHigh()
+/*void debugThreadHigh()
 {
     //Module* debugOnB = new Debug("PE_13", 1);
     //baseThread->registerModule(debugOnB);
@@ -471,7 +471,7 @@ void debugThreadLow()
 
     Module* debugOffS = new Debug("P1_22", 0);
     servoThread->registerModule(debugOffS);
-}
+}*/
 
 
 void EDMA_Callback(edma_handle_t *handle, void *param, bool transferDone, uint32_t tcds)
@@ -588,7 +588,7 @@ int main(void)
      		              loadModules();
      		              //debugThreadLow();
      		              udpServer_init();
-     		              IAP_tftpd_init();
+     		              IAP_tftpd_init(g_EDMA_Handle);
 
      		              currentState = ST_START;
      		              break;
