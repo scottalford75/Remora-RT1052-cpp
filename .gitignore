@@ -63,3 +63,6 @@ Remora-RT1052-cpp/Release/xip/mimxrt1050_flexspi_nor_config.d
 Remora-RT1052-cpp/Release/xip/mimxrt1050_flexspi_nor_config.o
 Remora-RT1052-cpp/Release/xip/mimxrt1050_flexspi_nor_config.su
 Remora-RT1052-cpp/Release/xip/subdir.mk
+Remora-RT1052-cpp/.cproject
+Remora-RT1052-cpp/.settings/language.settings.xml
+Remora-RT1052-cpp/.settings/org.eclipse.cdt.managedbuilder.core.prefs
