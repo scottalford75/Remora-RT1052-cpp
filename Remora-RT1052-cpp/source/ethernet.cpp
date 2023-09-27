@@ -107,12 +107,16 @@ void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
 	struct pbuf *txBuf;
 	//Lets reduce time by getting the header information before doing memcpy
 
-	int32_t header = int32_t(
+	int32_t header =
+			*(uint8_t*)((p->payload + (sizeof(uint8_t) * 0))) |
+			(*(uint8_t*)((p->payload + (sizeof(uint8_t) * 1))) << 8) |
+			(*(uint8_t*)((p->payload + (sizeof(uint8_t) * 2))) << 16) |
+			(*(uint8_t*)((p->payload + (sizeof(uint8_t) * 3))) << 24);/*int32_t(
 				*(uint8_t*)((p->payload + (sizeof(uint8_t) * 0))) << 24 |
 				*(uint8_t*)((p->payload + (sizeof(uint8_t) * 1))) << 16 |
 				*(uint8_t*)((p->payload + (sizeof(uint8_t) * 2))) << 8 |
 				*(uint8_t*)((p->payload + (sizeof(uint8_t) * 3)))
-			);
+			);*/
 
 	//We have header information we won't be using memcpy because if its PRU_READ there will be no use for it
 	// because linuxcnc just wants to read us and well memcpy for no reason takes time, so we comment it out. :)
