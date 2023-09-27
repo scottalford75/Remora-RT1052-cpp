@@ -532,8 +532,7 @@ void DMAconfig(void)
 	EDMA_ResetChannel(g_EDMA_Handle.base, g_EDMA_Handle.channel);
 
 	/* prepare descriptor 0 */
-	EDMA_PrepareTransfer(&transferConfig, stepgenDMAbuffer_0, sizeof(stepgenDMAbuffer_0[0]), &GPIO1->DR_TOGGLE, sizeof(GPIO1->DR_TOGGLE),
-	//EDMA_PrepareTransfer(&transferConfig, stepgenDMAbuffer_0, sizeof(stepgenDMAbuffer_0[0]), &GPIO1->DR, sizeof(GPIO1->DR),
+	EDMA_PrepareTransfer((edma_transfer_config_t *)&transferConfig, stepgenDMAbuffer_0, sizeof(stepgenDMAbuffer_0[0]), (uint32_t*)&GPIO1->DR_TOGGLE, sizeof(GPIO1->DR_TOGGLE),
 						 sizeof(stepgenDMAbuffer_0[0]),
 						 sizeof(stepgenDMAbuffer_0[0]) * DMA_BUFFER_SIZE,
 						 kEDMA_MemoryToPeripheral);
@@ -541,8 +540,7 @@ void DMAconfig(void)
 	EDMA_TcdEnableInterrupts(&tcdMemoryPoolPtr[0], kEDMA_MajorInterruptEnable);
 
 	/* prepare descriptor 1 */
-	EDMA_PrepareTransfer(&transferConfig, stepgenDMAbuffer_1, sizeof(stepgenDMAbuffer_1[0]), &GPIO1->DR_TOGGLE, sizeof(GPIO1->DR_TOGGLE),
-	//EDMA_PrepareTransfer(&transferConfig, stepgenDMAbuffer_1, sizeof(stepgenDMAbuffer_1[0]), &GPIO1->DR, sizeof(GPIO1->DR),
+	EDMA_PrepareTransfer((edma_transfer_config_t *)&transferConfig, stepgenDMAbuffer_1, sizeof(stepgenDMAbuffer_1[0]), (uint32_t*)&GPIO1->DR_TOGGLE, sizeof(GPIO1->DR_TOGGLE),
 						 sizeof(stepgenDMAbuffer_1[0]),
 						 sizeof(stepgenDMAbuffer_1[0]) * DMA_BUFFER_SIZE,
 						 kEDMA_MemoryToPeripheral);
