@@ -124,12 +124,18 @@ void DMAstepgen::makePulses()
 
 	this->isEnabled = ((*(this->ptrJointEnable) & this->mask) != 0);
 
-	if (this->isEnabled == true)  												// this Step generator is enabled so make the pulses
+	if (this->isEnabled || this->isStepping)  									// this Step generator is enabled so make the pulses
 	{
 		this->frequencyCommand = *(this->ptrFrequencyCommand);            		// Get the latest frequency command via pointer to the data source
 		if (this->frequencyCommand != 0)
 		{
 			this->oldaddValue = this->addValue;
+
+			//debugging
+			//this->oldaddValue3 = this->oldaddValue2;
+			//this->oldaddValue2 = this->oldaddValue1;
+			//this->oldaddValue1 = this->oldaddValue;
+
 			this->addValue = (BUFFER_COUNTS * PRU_SERVOFREQ) / abs(this->frequencyCommand);		// determine the add value from the commanded frequency ratio
 
 			// determine which ping-pong buffer to fill
@@ -143,11 +149,13 @@ void DMAstepgen::makePulses()
 			}
 
 			// finish the step from the previous period if needed
-			if (this->stepLow != 0)
+			if (this->isStepping)
 			{
 				// put step low into DMA buffer
-				*(stepDMAbuffer + this->stepLow - 1) |= this->stepMask;
+				*(stepDMAbuffer + this->stepLow) |= this->stepMask;
+				//printf("%d", this->stepLow);
 				this->stepLow = 0;
+				this->isStepping = false;
 			}
 
 			// what's the direction for this period
@@ -179,9 +187,12 @@ void DMAstepgen::makePulses()
 			if (this->addValue - this->prevRemainder <= BUFFER_COUNTS)
 			{
 				// at least one step in this period
-
 				this->accumulator = this->addValue - this->prevRemainder;
 				this->remainder = BUFFER_COUNTS - this->accumulator;
+				if (this-> remainder == 0)
+				{
+					this->accumulator--;
+				}
 				this->makeStep();
 
 				while (this->remainder >= this->addValue)
@@ -189,7 +200,10 @@ void DMAstepgen::makePulses()
 					// we can still step in this period
 					this->accumulator = this->accumulator + this->addValue;
 					this->remainder = BUFFER_COUNTS - this->accumulator;
-
+					if (this-> remainder == 0)
+					{
+						this->accumulator--;
+					}
 					this->makeStep();
 				}
 
@@ -197,7 +211,7 @@ void DMAstepgen::makePulses()
 				this->accumulator = 0;
 				this->prevRemainder = this->remainder;
 
-				// update DDS accumulator (for compatability with software stepgen)
+				// update DDS accumulator (for compatibility with software stepgen)
 				this->DDSaccumulator = this->rawCount << this->stepBit;
 				*(this->ptrFeedback) = this->DDSaccumulator;                     // Update position feedback via pointer to the data receiver
 			}
@@ -218,7 +232,7 @@ void DMAstepgen::makeStep()
 {
 	// map stepPos (1 - 500) to DMA buffer (0 - 999)
 	this->stepPos = this->accumulator / (RESOLUTION / 2);
-	this->stepHigh = this->stepPos - 2;
+	this->stepHigh = this->stepPos;
 	this->stepLow = this->stepHigh + 1;
 	// TODO incorporate step length setting, which will impact max frequency / minimum add value
 
@@ -227,6 +241,7 @@ void DMAstepgen::makeStep()
 	// put step high into DMA buffer
 	*(stepDMAbuffer + this->stepHigh) |= this->stepMask;
 	this->stepHigh = 0;
+	this->isStepping = true;
 
 	// update the raw step count
 	if (this->dir)
@@ -245,6 +260,7 @@ void DMAstepgen::makeStep()
 		// put step low into DMA buffer
 		*(stepDMAbuffer + this->stepLow) |= this->stepMask;
 		this->stepLow = 0;
+		this->isStepping = false;
 	}
 	else
 	{
