@@ -89,7 +89,11 @@ uint32_t servo_freq = PRU_SERVOFREQ;
 // boolean
 volatile bool PRUreset;
 bool configError = false;
+bool hasBaseThread = false;
+bool hasServoThread = false;
+bool hasDMAthread = false;
 bool threadsRunning = false;
+bool DMAstepgenRunning = false;
 
 
 // DMA stepgen double buffers
@@ -401,6 +405,7 @@ void loadModules(void)
 	// Ethernet communication monitoring
 	comms = new RemoraComms();
 	servoThread->registerModule(comms);
+	hasServoThread = true;
 
     if (configError) return;
 
@@ -417,6 +422,7 @@ void loadModules(void)
         if (!strcmp(thread,"DMA"))
         {
             printf("\nDMA thread object\n");
+            hasDMAthread = true;
 
             if (!strcmp(type,"DMAstepgen"))
             {
@@ -427,6 +433,7 @@ void loadModules(void)
         else if (!strcmp(thread,"Base"))
         {
             printf("\nBase thread object\n");
+            hasBaseThread = true;
 
             if (!strcmp(type,"Stepgen"))
             {
@@ -439,6 +446,9 @@ void loadModules(void)
          }
         else if (!strcmp(thread,"Servo"))
         {
+            printf("\nServo thread object\n");
+            hasServoThread = true;
+
         	if (!strcmp(type,"Digital Pin"))
 			{
 				createDigitalPin();
@@ -523,6 +533,7 @@ void DMAconfig(void)
 
 	/* prepare descriptor 0 */
 	EDMA_PrepareTransfer(&transferConfig, stepgenDMAbuffer_0, sizeof(stepgenDMAbuffer_0[0]), &GPIO1->DR_TOGGLE, sizeof(GPIO1->DR_TOGGLE),
+	//EDMA_PrepareTransfer(&transferConfig, stepgenDMAbuffer_0, sizeof(stepgenDMAbuffer_0[0]), &GPIO1->DR, sizeof(GPIO1->DR),
 						 sizeof(stepgenDMAbuffer_0[0]),
 						 sizeof(stepgenDMAbuffer_0[0]) * DMA_BUFFER_SIZE,
 						 kEDMA_MemoryToPeripheral);
@@ -531,6 +542,7 @@ void DMAconfig(void)
 
 	/* prepare descriptor 1 */
 	EDMA_PrepareTransfer(&transferConfig, stepgenDMAbuffer_1, sizeof(stepgenDMAbuffer_1[0]), &GPIO1->DR_TOGGLE, sizeof(GPIO1->DR_TOGGLE),
+	//EDMA_PrepareTransfer(&transferConfig, stepgenDMAbuffer_1, sizeof(stepgenDMAbuffer_1[0]), &GPIO1->DR, sizeof(GPIO1->DR),
 						 sizeof(stepgenDMAbuffer_1[0]),
 						 sizeof(stepgenDMAbuffer_1[0]) * DMA_BUFFER_SIZE,
 						 kEDMA_MemoryToPeripheral);
@@ -539,7 +551,7 @@ void DMAconfig(void)
 
 	EDMA_InstallTCD(DMA0, 0, tcdMemoryPoolPtr);
 
-	EDMA_StartTransfer(&g_EDMA_Handle);
+	//EDMA_StartTransfer(&g_EDMA_Handle);
 }
 
 
@@ -604,13 +616,22 @@ int main(void)
      		              if (!threadsRunning)
      		              {
      		                  // Start the threads
-     		                  printf("\nStarting the BASE thread\n");
-     		                  baseThread->startThread();
+     		            	  if (hasBaseThread)
+     		            	  {
+         		                  printf("\nStarting the BASE thread\n");
+         		                  baseThread->startThread();
+     		            	  }
 
-     		                  printf("\nStarting the SERVO thread\n");
-     		                  servoThread->startThread();
+     		            	  if (hasServoThread)
+     		            	  {
+         		                  printf("\nStarting the SERVO thread\n");
+         		                  servoThread->startThread();
+     		            	  }
 
-     		                  DMAconfig(); // put this in the right place+
+     		            	  if (hasDMAthread)
+     		            	  {
+         		                  DMAconfig();
+     		            	  }
 
      		                  threadsRunning = true;
      		              }
@@ -643,6 +664,15 @@ int main(void)
      		                  printf("\n## Entering RUNNING state\n");
      		              }
      		              prevState = currentState;
+
+     		              if (DMAstepgenRunning == false)
+     		              {
+     		            	  // fill the buffer and kick off DMA, we should be in sync with LinuxCNC servo thread now
+     		            	 for (iterDMA = vDMAthread.begin(); iterDMA != vDMAthread.end(); ++iterDMA) (*iterDMA)->runModule();
+     		            	 EDMA_StartTransfer(&g_EDMA_Handle);
+     		            	 DMAstepgenRunning = true;
+     		            	 printf("   Starting DMA Stepgen\n");
+     		              }
 
      		              if (comms->getStatus() == false)
      		              {
@@ -681,6 +711,15 @@ int main(void)
      		                      rxData.rxBuffer[n] = 0;
      		                  }
      		              }
+
+     		              if (DMAstepgenRunning)
+     		              {
+     		            	 EDMA_AbortTransfer(&g_EDMA_Handle);
+     		            	 DMAconfig();
+     		            	 DMAstepgenRunning = false;
+     		            	 printf("   Stopping DMA Stepgen\n");
+     		              }
+
 
      		              currentState = ST_IDLE;
      		              break;
