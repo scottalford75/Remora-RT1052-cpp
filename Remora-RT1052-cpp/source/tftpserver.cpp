@@ -273,17 +273,11 @@ static int IAP_tftp_process_write(struct udp_pcb *upcb, const ip_addr_t *to, int
   if (hasBaseThread) baseThread->stopThread();
   if (hasServoThread) servoThread->stopThread();
 
-<<<<<<< refs/remotes/origin/feature/DMAstepgen
-  EDMA_StopTransfer((edma_handle_t*)&edma_handle);
-  EDMA_ResetChannel(edma_handle.base, edma_handle.channel);
-  EDMA_Deinit(DMA0);
-=======
   if (hasDMAthread)
   {
 	  EDMA_StopTransfer(&edma_handle);
 	  EDMA_ResetChannel(edma_handle.base, edma_handle.channel);
 	  EDMA_Deinit(DMA0);
->>>>>>> DMA Stepgen beta testing
 
 	  DMAMUX_DisableChannel(DMAMUX, 0);
 	  DMAMUX_Deinit(DMAMUX);

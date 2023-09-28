@@ -67,7 +67,7 @@ DMAstepgen::DMAstepgen(int32_t threadFreq, int jointNumber, std::string step, st
 	if (this->stepLength == 0) stepLength = 1;
 	if (this->stepSpace == 0) stepSpace = 1;
 
-	this->minAddValue = (this->stepLength + this->stepSpace) * 500; //(BUFFER_COUNTS / DMA_BUFFER_SIZE);
+	this->minAddValue = (this->stepLength + this->stepSpace) * (RESOLUTION / 2);
 
 	// determine the step pin number from the portAndPin string
 	pin = this->step[3] - '0';
@@ -80,8 +80,6 @@ DMAstepgen::DMAstepgen(int32_t threadFreq, int jointNumber, std::string step, st
 	pin2 = this->direction[4] - '0';
 	if (pin2 <= 8) pin = pin * 10 + pin2;
 	this->dirMask = 1 << pin;
-
-	//this->isEnabled = true; // TESTING!!! to be removed
 }
 
 
@@ -121,7 +119,7 @@ void DMAstepgen::makePulses()
 
 	this->isEnabled = ((*(this->ptrJointEnable) & this->mask) != 0);
 
-	if (this->isEnabled || this->isStepping)  									// this Step generator is enabled so make the pulses
+	if (this->isEnabled)  									// this Step generator is enabled so make the pulses
 	{
 		this->frequencyCommand = *(this->ptrFrequencyCommand);            		// Get the latest frequency command via pointer to the data source
 		if (this->frequencyCommand != 0)
@@ -150,7 +148,6 @@ void DMAstepgen::makePulses()
 			{
 				// put step low into DMA buffer
 				*(stepDMAbuffer + this->stepLow) |= this->stepMask;
-				//printf("%d", this->stepLow);
 				this->stepLow = 0;
 				this->isStepping = false;
 			}
@@ -168,8 +165,6 @@ void DMAstepgen::makePulses()
 			// change of direction?
 			if (this->dir != this->oldDir)
 			{
-				// TODO set the dirHold and dirSetup
-
 				// toggle the direction pin
 				*stepDMAbuffer |= this->dirMask;
 				this->oldDir = this->dir;
@@ -221,6 +216,7 @@ void DMAstepgen::makePulses()
 	else
 	{
 		this->prevRemainder = 0;
+		this->isStepping = false;
 
 		// ensure the pin is in a know state as we're using DR_TOGGLE
 		this->stepPin->set(0);
@@ -235,9 +231,6 @@ void DMAstepgen::makeStep()
 	this->stepPos = this->accumulator / (RESOLUTION / 2);
 	this->stepHigh = this->stepPos;
 	this->stepLow = this->stepHigh + this->stepLength;
-	// TODO incorporate step length setting, which will impact max frequency / minimum add value
-
-	//printf("acc = %ld, rem = %ld, stepH = %d, stepL = %d\n\r", this->accumulator, this->remainder, this->stepHigh, this->stepLow);
 
 	// put step high into DMA buffer
 	*(stepDMAbuffer + this->stepHigh) |= this->stepMask;
