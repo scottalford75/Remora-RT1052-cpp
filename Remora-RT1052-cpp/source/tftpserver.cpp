@@ -31,9 +31,7 @@ static uint32_t Flash_Write_Address;
 static struct udp_pcb *UDPpcb;
 static __IO uint32_t total_count=0;
 static edma_handle_t edma_handle;
-static bool using_edma = false;
-static bool using_servo = false;
-static bool using_base = false;
+
 
 /* Private function prototypes -----------------------------------------------*/
 
@@ -272,19 +270,16 @@ static int IAP_tftp_process_write(struct udp_pcb *upcb, const ip_addr_t *to, int
 
   // Stop the threads
   printf("\nReceiving new configuration. Stopping threads..\n");
-  if(using_base)
-	  baseThread->stopThread();
-  if(using_servo)
-	  servoThread->stopThread();
-  if(using_edma) {
-	  EDMA_AbortTransfer((edma_handle_t*)&edma_handle);
-	  EDMA_StopTransfer((edma_handle_t*)&edma_handle);
-	  EDMA_ResetChannel(edma_handle.base, edma_handle.channel);
-	  EDMA_Deinit(DMA0);
+  baseThread->stopThread();
+  servoThread->stopThread();
 
-	  DMAMUX_DisableChannel(DMAMUX, 0);
-	  DMAMUX_Deinit(DMAMUX);
-  }
+  EDMA_StopTransfer((edma_handle_t*)&edma_handle);
+  EDMA_ResetChannel(edma_handle.base, edma_handle.channel);
+  EDMA_Deinit(DMA0);
+
+  DMAMUX_DisableChannel(DMAMUX, 0);
+  DMAMUX_Deinit(DMAMUX);
+
   /* init flash */
   flexspi_nor_flash_init(FLEXSPI);
 
@@ -399,12 +394,9 @@ static void IAP_tftp_cleanup_wr(struct udp_pcb *upcb, tftp_connection_args *args
   * @param  None
   * @retval None
   */
-void IAP_tftpd_init(edma_handle_t handle, bool edma_enabled, bool enable_servo, bool enable_base)
+void IAP_tftpd_init(edma_handle_t handle)
 {
-  using_edma = edma_enabled;
   edma_handle = handle;
-  using_servo = enable_servo;
-  using_base = enable_base;
   err_t err;
   unsigned port = 69; /* 69 is the port used for TFTP protocol initial transaction */
 

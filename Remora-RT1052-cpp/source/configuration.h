@@ -1,7 +1,7 @@
 #ifndef CONFIGURATION_H
 #define CONFIGURATION_H
 
-#define DMA_FREQ			80000			// DMA stepgen frequency = 2 x 500kHz
+#define DMA_FREQ			500000			// DMA stepgen frequency = 2 x 500kHz
 #define PRU_BASEFREQ    	40000    		// PRU Base thread ISR update frequency (hz)
 #define PRU_SERVOFREQ       1000            // PRU Servo thread ISR update freqency (hz)
 
