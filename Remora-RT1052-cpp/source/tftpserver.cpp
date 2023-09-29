@@ -270,15 +270,18 @@ static int IAP_tftp_process_write(struct udp_pcb *upcb, const ip_addr_t *to, int
 
   // Stop the threads
   printf("\nReceiving new configuration. Stopping threads..\n");
-  baseThread->stopThread();
-  servoThread->stopThread();
+  if (hasBaseThread) baseThread->stopThread();
+  if (hasServoThread) servoThread->stopThread();
 
-  EDMA_StopTransfer((edma_handle_t*)&edma_handle);
-  EDMA_ResetChannel(edma_handle.base, edma_handle.channel);
-  EDMA_Deinit(DMA0);
+  if (hasDMAthread)
+  {
+	  EDMA_StopTransfer(&edma_handle);
+	  EDMA_ResetChannel(edma_handle.base, edma_handle.channel);
+	  EDMA_Deinit(DMA0);
 
-  DMAMUX_DisableChannel(DMAMUX, 0);
-  DMAMUX_Deinit(DMAMUX);
+	  DMAMUX_DisableChannel(DMAMUX, 0);
+	  DMAMUX_Deinit(DMAMUX);
+  }
 
   /* init flash */
   flexspi_nor_flash_init(FLEXSPI);

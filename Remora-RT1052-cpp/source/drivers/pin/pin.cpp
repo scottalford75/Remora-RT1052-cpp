@@ -63,12 +63,6 @@ Pin::Pin(std::string portAndPin, int dir) :
     }
 
     GPIO_PinInit(this->GPIOx, this->pin, &this->config);
-
-    // if Output force to known state, ie low
-    if (this->dir == OUTPUT)
-    {
-    	GPIO_PinWrite(this->GPIOx, this->pin, 0);
-    }
 }
 
 

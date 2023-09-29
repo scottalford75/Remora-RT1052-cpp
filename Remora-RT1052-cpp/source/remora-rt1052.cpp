@@ -560,7 +560,6 @@ int main(void)
 
 	enum State currentState;
 	enum State prevState;
-
     BOARD_ConfigMPU();
     BOARD_InitBootPins();
     BOARD_InitBootClocks();
@@ -717,7 +716,6 @@ int main(void)
      		            	 DMAstepgenRunning = false;
      		            	 printf("   Stopping DMA Stepgen\n");
      		              }
-
 
      		              currentState = ST_IDLE;
      		              break;

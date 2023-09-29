@@ -15,6 +15,9 @@ extern uint32_t servo_freq;
 extern JsonObject module;
 
 extern volatile bool PRUreset;
+extern bool hasBaseThread;
+extern bool hasServoThread;
+extern bool hasDMAthread;
 
 
 // DMA stepgen double buffers

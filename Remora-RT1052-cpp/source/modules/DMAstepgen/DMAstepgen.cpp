@@ -14,6 +14,8 @@ void createDMAstepgen()
     int joint = module["Joint Number"];
     const char* step = module["Step Pin"];
     const char* dir = module["Direction Pin"];
+    int stepLength = module["Step Length"];
+    int stepSpace = module["Step Space"];
 
     // configure pointers to data source and feedback location
     ptrJointFreqCmd[joint] = &rxData.jointFreqCmd[joint];
@@ -21,7 +23,7 @@ void createDMAstepgen()
     ptrJointEnable = &rxData.jointEnable;
 
     // create the step generator, register it in the thread
-    Module* stepgen = new DMAstepgen(DMA_FREQ, joint, step, dir, DMA_BUFFER_SIZE, STEPBIT, *ptrJointFreqCmd[joint], *ptrJointFeedback[joint], *ptrJointEnable);
+    Module* stepgen = new DMAstepgen(DMA_FREQ, joint, step, dir, DMA_BUFFER_SIZE, STEPBIT, *ptrJointFreqCmd[joint], *ptrJointFeedback[joint], *ptrJointEnable, stepLength, stepSpace);
     vDMAthread.push_back(stepgen);
 }
 
@@ -30,7 +32,7 @@ void createDMAstepgen()
                 METHOD DEFINITIONS
 ************************************************************************/
 
-DMAstepgen::DMAstepgen(int32_t threadFreq, int jointNumber, std::string step, std::string direction, int DMAbufferSize, int stepBit, volatile int32_t &ptrFrequencyCommand, volatile int32_t &ptrFeedback, volatile uint8_t &ptrJointEnable) :
+DMAstepgen::DMAstepgen(int32_t threadFreq, int jointNumber, std::string step, std::string direction, int DMAbufferSize, int stepBit, volatile int32_t &ptrFrequencyCommand, volatile int32_t &ptrFeedback, volatile uint8_t &ptrJointEnable, uint8_t stepLength, uint8_t stepSpace) :
 	jointNumber(jointNumber),
 	step(step),
 	direction(direction),
@@ -39,22 +41,14 @@ DMAstepgen::DMAstepgen(int32_t threadFreq, int jointNumber, std::string step, st
 	ptrFrequencyCommand(&ptrFrequencyCommand),
 	ptrFeedback(&ptrFeedback),
 	ptrJointEnable(&ptrJointEnable),
-	stepTime(1),
-	dirHoldTime(1),
-	dirSetupTime(1)
+	stepLength(stepLength),
+	stepSpace(stepSpace)
 {
 	uint8_t pin, pin2;
 
 	stepDMAbuffer_0 = &stepgenDMAbuffer_0[0];
 	stepDMAbuffer_1 = &stepgenDMAbuffer_1[0];
 	stepDMAactiveBuffer = &stepgenDMAbuffer;
-	//this->frequencyCommand = 500000;
-
-	//if (this->jointNumber == 1)
-//	{
-//		this->frequencyCommand = 431125;
-//	}
-
 
 	dirDMAbuffer_0 = &stepgenDMAbuffer_0[0];
 	dirDMAbuffer_1 = &stepgenDMAbuffer_1[0];
@@ -65,12 +59,15 @@ DMAstepgen::DMAstepgen(int32_t threadFreq, int jointNumber, std::string step, st
 	this->directionPin = new Pin(this->direction, OUTPUT);
 	this->accumulator = 0;
 	this->remainder = 0;
-	this->prevRemainder = 0;
 	this->stepLow = 0;
 	this->mask = 1 << this->jointNumber;
 	this->isEnabled = false;
 	this->dir = false;
-	//this->isForward = false;
+
+	if (this->stepLength == 0) stepLength = 1;
+	if (this->stepSpace == 0) stepSpace = 1;
+
+	this->minAddValue = (this->stepLength + this->stepSpace) * (RESOLUTION / 2);
 
 	// determine the step pin number from the portAndPin string
 	pin = this->step[3] - '0';
@@ -83,8 +80,6 @@ DMAstepgen::DMAstepgen(int32_t threadFreq, int jointNumber, std::string step, st
 	pin2 = this->direction[4] - '0';
 	if (pin2 <= 8) pin = pin * 10 + pin2;
 	this->dirMask = 1 << pin;
-
-	//this->isEnabled = true; // TESTING!!! to be removed
 }
 
 
@@ -124,19 +119,19 @@ void DMAstepgen::makePulses()
 
 	this->isEnabled = ((*(this->ptrJointEnable) & this->mask) != 0);
 
-	if (this->isEnabled || this->isStepping)  									// this Step generator is enabled so make the pulses
+	if (this->isEnabled)  									// this Step generator is enabled so make the pulses
 	{
 		this->frequencyCommand = *(this->ptrFrequencyCommand);            		// Get the latest frequency command via pointer to the data source
 		if (this->frequencyCommand != 0)
 		{
 			this->oldaddValue = this->addValue;
 
-			//debugging
-			//this->oldaddValue3 = this->oldaddValue2;
-			//this->oldaddValue2 = this->oldaddValue1;
-			//this->oldaddValue1 = this->oldaddValue;
-
 			this->addValue = (BUFFER_COUNTS * PRU_SERVOFREQ) / abs(this->frequencyCommand);		// determine the add value from the commanded frequency ratio
+
+			if (this->addValue < this->minAddValue)
+			{
+				this->addValue = this->minAddValue;			// limit the frequency to step requirements
+			}
 
 			// determine which ping-pong buffer to fill
 			if (!*stepDMAactiveBuffer)	// false = buffer_0
@@ -153,7 +148,6 @@ void DMAstepgen::makePulses()
 			{
 				// put step low into DMA buffer
 				*(stepDMAbuffer + this->stepLow) |= this->stepMask;
-				//printf("%d", this->stepLow);
 				this->stepLow = 0;
 				this->isStepping = false;
 			}
@@ -171,8 +165,6 @@ void DMAstepgen::makePulses()
 			// change of direction?
 			if (this->dir != this->oldDir)
 			{
-				// TODO set the dirHold and dirSetup
-
 				// toggle the direction pin
 				*stepDMAbuffer |= this->dirMask;
 				this->oldDir = this->dir;
@@ -224,6 +216,11 @@ void DMAstepgen::makePulses()
 	else
 	{
 		this->prevRemainder = 0;
+		this->isStepping = false;
+
+		// ensure the pin is in a know state as we're using DR_TOGGLE
+		this->stepPin->set(0);
+		this->directionPin->set(0);
 	}
 }
 
@@ -233,10 +230,7 @@ void DMAstepgen::makeStep()
 	// map stepPos (1 - 500) to DMA buffer (0 - 999)
 	this->stepPos = this->accumulator / (RESOLUTION / 2);
 	this->stepHigh = this->stepPos;
-	this->stepLow = this->stepHigh + 1;
-	// TODO incorporate step length setting, which will impact max frequency / minimum add value
-
-	//printf("acc = %ld, rem = %ld, stepH = %d, stepL = %d\n\r", this->accumulator, this->remainder, this->stepHigh, this->stepLow);
+	this->stepLow = this->stepHigh + this->stepLength;
 
 	// put step high into DMA buffer
 	*(stepDMAbuffer + this->stepHigh) |= this->stepMask;

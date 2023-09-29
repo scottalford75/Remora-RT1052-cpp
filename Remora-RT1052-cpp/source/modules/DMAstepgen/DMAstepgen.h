@@ -26,9 +26,8 @@ class DMAstepgen : public Module
     volatile int32_t *ptrFeedback;       	// pointer where to put the feedback
     volatile uint8_t *ptrJointEnable;
 
-    uint8_t timer1, timer2, timer3;			// step pattern timers
-    uint8_t stepTime;						// step time in number of DMA periods
-    uint8_t dirHoldTime, dirSetupTime;		// dir times in number of DMA periods
+    uint8_t stepLength;						// step time in number of DMA periods
+    uint8_t stepSpace;						// step space in number of DMA periods
 
     int32_t *stepDMAbuffer;
     int32_t *stepDMAbuffer_0;
@@ -43,7 +42,6 @@ class DMAstepgen : public Module
     uint32_t dirMask;
 
     bool isEnabled;        					// flag to enable the step generator
-    //bool isForward;        					// current direction
     bool dir;								// direction of this servo period
     bool oldDir;							// direction of previous servo period
     bool holdDDS;							// used to hold DDS calculations during direction setup time
@@ -53,8 +51,8 @@ class DMAstepgen : public Module
     int32_t rawCount;             			// current position raw count
     int32_t DDSaccumulator;       			// Direct Digital Synthesis (DDS) accumulator
     int32_t accumulator;       				// accumulator
-    //float   frequencyScale;		  			// frequency scale
   	int32_t	addValue;		  				//accumulator add add value
+  	int32_t	minAddValue;
   	int32_t oldaddValue;					// previous accumulator add value
   	int32_t remainder;
   	int32_t prevRemainder;
@@ -66,7 +64,7 @@ class DMAstepgen : public Module
 
   public:
 
-    DMAstepgen(int32_t, int, std::string, std::string, int, int, volatile int32_t&, volatile int32_t&, volatile uint8_t&);  // constructor
+    DMAstepgen(int32_t, int, std::string, std::string, int, int, volatile int32_t&, volatile int32_t&, volatile uint8_t&, uint8_t, uint8_t);  // constructor
 
     Pin *stepPin, *directionPin, *debug;		// class object members - Pin objects
 
