@@ -18,7 +18,6 @@ class pruTimer
 	friend class TimerInterrupt;
 
 	private:
-
 		TimerInterrupt* 	interruptPtr;
 		GPT_Type* 	    	timer;
 		IRQn_Type 			irq;

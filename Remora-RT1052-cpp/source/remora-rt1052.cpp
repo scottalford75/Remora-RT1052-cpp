@@ -598,7 +598,7 @@ int main(void)
      		              loadModules();
      		              //debugThreadLow();
      		              udpServer_init();
-     		              IAP_tftpd_init(g_EDMA_Handle);
+     		              IAP_tftpd_init(g_EDMA_Handle, hasDMAthread, hasServoThread, hasBaseThread);
 
      		              currentState = ST_START;
      		              break;

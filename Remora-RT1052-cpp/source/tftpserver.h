@@ -86,7 +86,7 @@ typedef enum {
 extern "C" {
 #endif
 
-void IAP_tftpd_init(edma_handle_t);
+void IAP_tftpd_init(edma_handle_t, bool, bool, bool);
 
 #ifdef __cplusplus
 }
