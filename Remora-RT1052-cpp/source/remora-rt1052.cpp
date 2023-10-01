@@ -425,6 +425,10 @@ void loadModules(void)
 			{
 				createNVMPG();
 			}
+        	else if (!strcmp(type,"QDC"))
+        	{
+        		createQdc();
+        	}
         }
     }
 }
