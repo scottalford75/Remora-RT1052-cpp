@@ -16,6 +16,7 @@ void createDMAstepgen()
     const char* dir = module["Direction Pin"];
     int stepLength = module["Step Length"];
     int stepSpace = module["Step Space"];
+    int dirSetup = module["Dir Setup"];
 
     // configure pointers to data source and feedback location
     ptrJointFreqCmd[joint] = &rxData.jointFreqCmd[joint];
@@ -23,7 +24,7 @@ void createDMAstepgen()
     ptrJointEnable = &rxData.jointEnable;
 
     // create the step generator, register it in the thread
-    Module* stepgen = new DMAstepgen(DMA_FREQ, joint, step, dir, DMA_BUFFER_SIZE, STEPBIT, *ptrJointFreqCmd[joint], *ptrJointFeedback[joint], *ptrJointEnable, stepLength, stepSpace);
+    Module* stepgen = new DMAstepgen(DMA_FREQ, joint, step, dir, DMA_BUFFER_SIZE, STEPBIT, *ptrJointFreqCmd[joint], *ptrJointFeedback[joint], *ptrJointEnable, stepLength, stepSpace, dirSetup);
     vDMAthread.push_back(stepgen);
 }
 
@@ -32,7 +33,7 @@ void createDMAstepgen()
                 METHOD DEFINITIONS
 ************************************************************************/
 
-DMAstepgen::DMAstepgen(int32_t threadFreq, int jointNumber, std::string step, std::string direction, int DMAbufferSize, int stepBit, volatile int32_t &ptrFrequencyCommand, volatile int32_t &ptrFeedback, volatile uint8_t &ptrJointEnable, uint8_t stepLength, uint8_t stepSpace) :
+DMAstepgen::DMAstepgen(int32_t threadFreq, int jointNumber, std::string step, std::string direction, int DMAbufferSize, int stepBit, volatile int32_t &ptrFrequencyCommand, volatile int32_t &ptrFeedback, volatile uint8_t &ptrJointEnable, uint8_t stepLength, uint8_t stepSpace, uint8_t dirSetup) :
 	jointNumber(jointNumber),
 	step(step),
 	direction(direction),
@@ -42,7 +43,8 @@ DMAstepgen::DMAstepgen(int32_t threadFreq, int jointNumber, std::string step, st
 	ptrFeedback(&ptrFeedback),
 	ptrJointEnable(&ptrJointEnable),
 	stepLength(stepLength),
-	stepSpace(stepSpace)
+	stepSpace(stepSpace),
+	dirSetup(dirSetup)
 {
 	uint8_t pin, pin2;
 
@@ -64,8 +66,9 @@ DMAstepgen::DMAstepgen(int32_t threadFreq, int jointNumber, std::string step, st
 	this->isEnabled = false;
 	this->dir = false;
 
-	if (this->stepLength == 0) stepLength = 1;
-	if (this->stepSpace == 0) stepSpace = 1;
+	if (this->stepLength == 0) this->stepLength = 1;
+	if (this->stepSpace == 0) this->stepSpace = 1;
+	if (this->dirSetup == 0) this->dirSetup = 1;
 
 	this->minAddValue = (this->stepLength + this->stepSpace) * (RESOLUTION / 2);
 
@@ -168,6 +171,7 @@ void DMAstepgen::makePulses()
 				// toggle the direction pin
 				*stepDMAbuffer |= this->dirMask;
 				this->oldDir = this->dir;
+				this->dirChange = true;
 			}
 
 			// accumulator cannot go negative, so keep prevRemainder within limits
@@ -181,10 +185,13 @@ void DMAstepgen::makePulses()
 				// at least one step in this period
 				this->accumulator = this->addValue - this->prevRemainder;
 				this->remainder = BUFFER_COUNTS - this->accumulator;
+
+				// ensure we are within the buffer size
 				if (this-> remainder == 0)
 				{
 					this->accumulator--;
 				}
+
 				this->makeStep();
 
 				while (this->remainder >= this->addValue)
@@ -202,6 +209,7 @@ void DMAstepgen::makePulses()
 				// reset accumulator and carry remainder into the next period
 				this->accumulator = 0;
 				this->prevRemainder = this->remainder;
+				this->dirChange = false;
 
 				// update DDS accumulator (for compatibility with software stepgen)
 				this->DDSaccumulator = this->rawCount << this->stepBit;
@@ -210,17 +218,18 @@ void DMAstepgen::makePulses()
 			else
 			{
 				this->prevRemainder = this->prevRemainder + BUFFER_COUNTS;
+				this->dirChange = false;
 			}
 		}
 	}
 	else
 	{
-		this->prevRemainder = 0;
-		this->isStepping = false;
-
 		// ensure the pin is in a know state as we're using DR_TOGGLE
 		this->stepPin->set(0);
 		this->directionPin->set(0);
+		this->dir = true;
+		this->prevRemainder = 0;
+		this->isStepping = false;
 	}
 }
 
@@ -230,6 +239,13 @@ void DMAstepgen::makeStep()
 	// map stepPos (1 - 500) to DMA buffer (0 - 999)
 	this->stepPos = this->accumulator / (RESOLUTION / 2);
 	this->stepHigh = this->stepPos;
+
+	// respect direction setup time
+	if (this->dirChange && this->stepHigh == 0)
+	{
+		this->stepHigh = this->dirSetup;
+	}
+
 	this->stepLow = this->stepHigh + this->stepLength;
 
 	// put step high into DMA buffer
