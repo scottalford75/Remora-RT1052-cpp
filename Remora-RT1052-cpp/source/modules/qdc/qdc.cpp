@@ -80,14 +80,6 @@ void createQdc()
 
     ENC_Type* base = nullptr;
 
-    printf("Creating Quadrature Encoder at pins A: %s B: %s ", pinA, pinB);
-    if(pinI != nullptr)
-    	printf("I: %s\n",pinI);
-    else
-    	printf("I: null_Ptr\n");
-    printf("Data Bit number %d\n", dataBit);
-    printf("Encoder Number %d\n", encNumber);
-
     if(initXBARA == true)
     {
     	XBARA_Init(XBARA1);
@@ -127,6 +119,7 @@ void createQdc()
     	break;
     }
 
+
     ptrProcessVariable[pv]  = &txData.processVariable[pv];
     ptrInputs = &txData.inputs;
 
@@ -137,6 +130,7 @@ void createQdc()
     }
     else
     {
+
         printf("  Quadrature Encoder has index at pin %s\n", pinI);
         Module* qdc = new Qdc(*ptrProcessVariable[pv], *ptrInputs, dataBit, base);
         servoThread->registerModule(qdc);
@@ -194,13 +188,13 @@ void Qdc::update()
       // handle index, index pulse and pulse count
       if ((ENC_GetStatusFlags(this->base) & kENC_INDEXPulseFlag) && (this->pulseCount == 0))    // index interrupt occured: rising edge on index pulse
       {
-          *(this->ptrEncoderCount) = ENC_GetHoldPositionValue(this->base);
+          *(this->ptrEncoderCount) = this->count;
           this->pulseCount = this->indexPulse;
           *(this->ptrData) |= this->mask;                 // set bit in data source high
       }
       else if (this->pulseCount > 0)                      // maintain both index output and encoder count for the latch period
       {
-	  ENC_ClearStatusFlags(this->base, kENC_INDEXPulseFlag);
+    	  ENC_ClearStatusFlags(this->base, kENC_INDEXPulseFlag);
           this->pulseCount--;                             // decrement the counter
       }
       else
