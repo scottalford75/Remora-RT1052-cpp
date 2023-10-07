@@ -13,7 +13,7 @@ void muxPinsXBAR(const char* pin,xbar_output_signal_t kXBARA1_OutputEncInput)
 	mux_op_pin = 2;
   else if(!strcmp(pin,"P3_21"))
     mux_op_pin = 3;
-  else if(!strcmp(pin,"P4_0"))
+  else if(!strcmp(pin,"P4_00"))
     mux_op_pin = 4;
   else if(!strcmp(pin,"P3_23"))
     mux_op_pin = 5;
@@ -194,7 +194,7 @@ void Qdc::update()
       // handle index, index pulse and pulse count
       if ((ENC_GetStatusFlags(this->base) & kENC_INDEXPulseFlag) && (this->pulseCount == 0))    // index interrupt occured: rising edge on index pulse
       {
-          *(this->ptrEncoderCount) = ENC_GetHoldRevolutionValue(this->base);
+          *(this->ptrEncoderCount) = ENC_GetHoldPositionValue(this->base);
           this->pulseCount = this->indexPulse;
           *(this->ptrData) |= this->mask;                 // set bit in data source high
       }
