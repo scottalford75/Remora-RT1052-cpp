@@ -138,7 +138,7 @@
         	"PV[i]":                 0,
         	"ChA Pin":            "P4_13",
         	"ChB Pin":            "P4_14",
-		"ENC No":             3
+		"ENC No":             1
 	},
 	{
 	"Thread": "Servo",
@@ -168,22 +168,14 @@
 		"Invert":			"False"
 	},
 	{
-	"Thread": "Servo",
-	"Type": "Digital Pin",
-		"Comment":			"IN11",
-		"Pin":				"P4_00",
-		"Mode":				"Input",
-		"Data Bit":			14,
-		"Invert":			"False"
-	},
-	{
-	"Thread": "Servo",
-	"Type": "Digital Pin",
-		"Comment":			"IN12",
-		"Pin":				"P3_23",
-		"Mode":				"Input",
-		"Data Bit":			15,
-		"Invert":			"False"
+    	"Thread": "Servo",
+    	"Type": "QDC",
+        	"Comment":            "QDC Encoder A-IN11 B-IN12 I-IN14",
+        	"PV[i]":              1,
+        	"ChA Pin":            "P4_00",
+        	"ChB Pin":            "P3_23",
+		"Index Pin":	      "P4_15",
+		"ENC No":             2
 	},
 	{
 	"Thread": "Servo",
@@ -192,15 +184,6 @@
 		"Pin":				"P4_28",
 		"Mode":				"Input",
 		"Data Bit":			16,
-		"Invert":			"False"
-	},
-	{
-	"Thread": "Servo",
-	"Type": "Digital Pin",
-		"Comment":			"IN14",
-		"Pin":				"P4_15",
-		"Mode":				"Input",
-		"Data Bit":			17,
 		"Invert":			"False"
 	},
 	{
