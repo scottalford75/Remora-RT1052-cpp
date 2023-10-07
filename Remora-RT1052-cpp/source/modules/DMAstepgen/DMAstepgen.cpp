@@ -127,6 +127,7 @@ void DMAstepgen::makePulses()
 		this->frequencyCommand = *(this->ptrFrequencyCommand);            		// Get the latest frequency command via pointer to the data source
 		if (this->frequencyCommand != 0)
 		{
+			int bufferOffset = 0;
 			this->oldaddValue = this->addValue;
 
 			this->addValue = (BUFFER_COUNTS * PRU_SERVOFREQ) / abs(this->frequencyCommand);		// determine the add value from the commanded frequency ratio
@@ -146,33 +147,34 @@ void DMAstepgen::makePulses()
 				stepDMAbuffer = stepDMAbuffer_1;
 			}
 
-			// finish the step from the previous period if needed
-			if (this->isStepping)
-			{
-				// put step low into DMA buffer
-				*(stepDMAbuffer + this->stepLow) |= this->stepMask;
-				this->stepLow = 0;
-				this->isStepping = false;
-			}
-
 			// what's the direction for this period
 			if (this->frequencyCommand < 0)
-			{
 				this->dir = false; // backwards
-			}
 			else
-			{
 				this->dir = true; // forwards
-			}
 
-			// change of direction?
 			if (this->dir != this->oldDir)
 			{
-				// toggle the direction pin
 				*stepDMAbuffer |= this->dirMask;
 				this->oldDir = this->dir;
 				this->dirChange = true;
 			}
+
+			// finish the step from the previous period if needed
+			if (this->isStepping)
+			{
+				// put step low into DMA buffer
+				if(!this->dirChange)
+					*(stepDMAbuffer + (bufferOffset = this->stepLow)) |= this->stepMask;
+				else
+					*(stepDMAbuffer + (bufferOffset = this->stepLow + this->dirSetup)) |= this->stepMask;
+
+				this->stepLow = 0;
+				this->isStepping = false;
+			}
+
+			// change of direction?
+
 
 			// accumulator cannot go negative, so keep prevRemainder within limits
 			if (this->prevRemainder > this->addValue)
@@ -183,7 +185,7 @@ void DMAstepgen::makePulses()
 			if (this->addValue - this->prevRemainder <= BUFFER_COUNTS)
 			{
 				// at least one step in this period
-				this->accumulator = this->addValue - this->prevRemainder;
+				this->accumulator = bufferOffset + (this->addValue - this->prevRemainder);
 				this->remainder = BUFFER_COUNTS - this->accumulator;
 
 				// ensure we are within the buffer size
