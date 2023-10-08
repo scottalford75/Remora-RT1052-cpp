@@ -1,7 +1,6 @@
 #ifndef QDC_H
 #define QDC_H
 
-#include "MIMXRT1052.h"
 #include <cstdint>
 #include <iostream>
 #include <string>

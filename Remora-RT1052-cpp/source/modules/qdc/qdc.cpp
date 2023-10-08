@@ -99,7 +99,6 @@ void createQdc()
 		}
 		base = ENC1;
 		encIndexIrqId = ENC1_IRQn;
-		//encIndexIrqHandlerPtr = ENC1_IRQHandler;
       	break;
       case(2):
 		muxPinsXBAR(pinA,kXBARA1_OutputEnc2PhaseAInput);
@@ -110,7 +109,6 @@ void createQdc()
 		}
 		base = ENC2;
 		encIndexIrqId = ENC2_IRQn;
-		//encIndexIrqHandlerPtr = ENC2_IRQHandler;
       	break;
       case(3):
 		muxPinsXBAR(pinA,kXBARA1_OutputEnc3PhaseAInput);
@@ -121,7 +119,16 @@ void createQdc()
 		}
 		base = ENC3;
 		encIndexIrqId = ENC3_IRQn;
-		//encIndexIrqHandlerPtr = ENC3_IRQHandler;
+      	break;
+      case(4):
+		muxPinsXBAR(pinA,kXBARA1_OutputEnc4PhaseAInput);
+		muxPinsXBAR(pinB,kXBARA1_OutputEnc4PhaseBInput);
+		if(pinI != nullptr)
+		{
+	      muxPinsXBAR(pinI,kXBARA1_OutputEnc4Index);
+		}
+		base = ENC4;
+		encIndexIrqId = ENC4_IRQn;
       	break;
       default:
     	break;
