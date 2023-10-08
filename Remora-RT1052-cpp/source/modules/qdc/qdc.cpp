@@ -81,6 +81,7 @@ void createQdc()
     ENC_Type* base = nullptr;
     IRQn_Type encIndexIrqId;
 
+
     if(initXBARA == true)
     {
     	XBARA_Init(XBARA1);
