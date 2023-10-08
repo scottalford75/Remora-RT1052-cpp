@@ -411,6 +411,10 @@ void loadModules(void)
             {
                 createEncoder();
             }
+        	else if (!strcmp(type,"QDC"))
+        	{
+        		createQdc();
+        	}
          }
         else if (!strcmp(thread,"Servo"))
         {
@@ -426,10 +430,6 @@ void loadModules(void)
 			{
 				createNVMPG();
 			}
-        	else if (!strcmp(type,"QDC"))
-        	{
-        		createQdc();
-        	}
         }
     }
 }
