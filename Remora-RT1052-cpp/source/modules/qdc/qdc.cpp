@@ -13,7 +13,7 @@ void muxPinsXBAR(const char* pin,xbar_output_signal_t kXBARA1_OutputEncInput)
 	mux_op_pin = 2;
   else if(!strcmp(pin,"P3_21"))
     mux_op_pin = 3;
-  else if(!strcmp(pin,"P4_0"))
+  else if(!strcmp(pin,"P4_00"))
     mux_op_pin = 4;
   else if(!strcmp(pin,"P3_23"))
     mux_op_pin = 5;
@@ -79,14 +79,7 @@ void createQdc()
     int encNumber = module["ENC No"];
 
     ENC_Type* base = nullptr;
-
-    printf("Creating Quadrature Encoder at pins A: %s B: %s ", pinA, pinB);
-    if(pinI != nullptr)
-    	printf("I: %s\n",pinI);
-    else
-    	printf("I: null_Ptr\n");
-    printf("Data Bit number %d\n", dataBit);
-    printf("Encoder Number %d\n", encNumber);
+    IRQn_Type encIndexIrqId;
 
     if(initXBARA == true)
     {
@@ -104,6 +97,8 @@ void createQdc()
 		  muxPinsXBAR(pinI,kXBARA1_OutputEnc1Index);
 		}
 		base = ENC1;
+		encIndexIrqId = ENC1_IRQn;
+		//encIndexIrqHandlerPtr = ENC1_IRQHandler;
       	break;
       case(2):
 		muxPinsXBAR(pinA,kXBARA1_OutputEnc2PhaseAInput);
@@ -113,6 +108,8 @@ void createQdc()
 		  muxPinsXBAR(pinI,kXBARA1_OutputEnc2Index);
 		}
 		base = ENC2;
+		encIndexIrqId = ENC2_IRQn;
+		//encIndexIrqHandlerPtr = ENC2_IRQHandler;
       	break;
       case(3):
 		muxPinsXBAR(pinA,kXBARA1_OutputEnc3PhaseAInput);
@@ -122,10 +119,13 @@ void createQdc()
 	      muxPinsXBAR(pinI,kXBARA1_OutputEnc3Index);
 		}
 		base = ENC3;
+		encIndexIrqId = ENC3_IRQn;
+		//encIndexIrqHandlerPtr = ENC3_IRQHandler;
       	break;
       default:
     	break;
     }
+
 
     ptrProcessVariable[pv]  = &txData.processVariable[pv];
     ptrInputs = &txData.inputs;
@@ -133,13 +133,15 @@ void createQdc()
     if (pinI == nullptr)
     {
         Module* qdc = new Qdc(*ptrProcessVariable[pv],base);
-        servoThread->registerModule(qdc);
+        baseThread->registerModule(qdc);
     }
     else
     {
+
         printf("  Quadrature Encoder has index at pin %s\n", pinI);
-        Module* qdc = new Qdc(*ptrProcessVariable[pv], *ptrInputs, dataBit, base);
-        servoThread->registerModule(qdc);
+        Module* qdc = new Qdc(*ptrProcessVariable[pv], *ptrInputs, dataBit, base,encIndexIrqId);
+        //NVIC_SetPriority(encIndexIrqId , 4);
+        baseThread->registerModule(qdc);
     }
 
 
@@ -163,19 +165,25 @@ Qdc::Qdc(volatile float &ptrEncoderCount, ENC_Type* base):
     this->count = 0;								// initialise the count to 0
 }
 
-Qdc::Qdc(volatile float &ptrEncoderCount, volatile uint32_t &ptrData, int bitNumber, ENC_Type* base) :
+Qdc::Qdc(volatile float &ptrEncoderCount, volatile uint32_t &ptrData, int bitNumber, ENC_Type* base,IRQn_Type irq) :
 	ptrEncoderCount(&ptrEncoderCount),
     ptrData(&ptrData),
     bitNumber(bitNumber),
-    base(base)
-
+    base(base),
+	irq(irq)
 {
-    enc_config_t mEncConfigStruct;
 
+    interruptPtr = new QdcInterrupt(this->irq, this);
+
+    enc_config_t mEncConfigStruct;
     /* Initialize the ENC module. */
     ENC_GetDefaultConfig(&mEncConfigStruct);
     ENC_Init(this->base, &mEncConfigStruct);
     ENC_DoSoftwareLoadInitialPositionValue(this->base); /* Update the position counter with initial value. */
+
+    ENC_EnableInterrupts(this->base,kENC_INDEXPulseInterruptEnable);
+    EnableIRQ(this->irq); /* Enable the interrupt for ENC_INDEX. */
+    ENC_ClearStatusFlags(this->base, kENC_INDEXPulseFlag);
 
     this->hasIndex = true;
     this->indexPulse = (PRU_BASEFREQ / PRU_SERVOFREQ) * 3;          // output the index pulse for 3 servo thread periods so LinuxCNC sees it
@@ -183,6 +191,7 @@ Qdc::Qdc(volatile float &ptrEncoderCount, volatile uint32_t &ptrData, int bitNum
     this->count = 0;								                // initialise the count to 0
     this->pulseCount = 0;                                           // number of base thread periods to pulse the index output
     this->mask = 1 << this->bitNumber;
+    this->indexDetected = false;
 }
 
 void Qdc::update()
@@ -192,15 +201,15 @@ void Qdc::update()
   if (this->hasIndex)                                     // we have an index pin
   {
       // handle index, index pulse and pulse count
-      if ((ENC_GetStatusFlags(this->base) & kENC_INDEXPulseFlag) && (this->pulseCount == 0))    // index interrupt occured: rising edge on index pulse
+      if (this->indexDetected && (this->pulseCount == 0))    // index interrupt occured: rising edge on index pulse
       {
-          *(this->ptrEncoderCount) = ENC_GetHoldRevolutionValue(this->base);
+          *(this->ptrEncoderCount) = this->count;
           this->pulseCount = this->indexPulse;
           *(this->ptrData) |= this->mask;                 // set bit in data source high
       }
       else if (this->pulseCount > 0)                      // maintain both index output and encoder count for the latch period
       {
-	  ENC_ClearStatusFlags(this->base, kENC_INDEXPulseFlag);
+    	  this->indexDetected = false;
           this->pulseCount--;                             // decrement the counter
       }
       else
@@ -213,4 +222,9 @@ void Qdc::update()
   {
       *(this->ptrEncoderCount) = this->count;             // update encoder count
   }
+}
+
+void Qdc::indexEvent()
+{
+	this->indexDetected = true;
 }
