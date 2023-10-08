@@ -21,6 +21,10 @@ class Interrupt
 		static void TIM1_Wrapper();
         static void TIM2_Wrapper();
 
+        static void ENC1_Wrapper();
+        static void ENC2_Wrapper();
+        static void ENC3_Wrapper();
+
 		virtual void ISR_Handler(void) = 0;
 
 };

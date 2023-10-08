@@ -28,3 +28,19 @@ void Interrupt::TIM2_Wrapper(void)
 	ISRVectorTable[GPT2_IRQn]->ISR_Handler();
 }
 
+void Interrupt::ENC1_Wrapper(void)
+{
+	ISRVectorTable[ENC1_IRQn]->ISR_Handler();
+}
+
+void Interrupt::ENC2_Wrapper(void)
+{
+	ISRVectorTable[ENC2_IRQn]->ISR_Handler();
+}
+
+void Interrupt::ENC3_Wrapper(void)
+{
+	ISRVectorTable[ENC3_IRQn]->ISR_Handler();
+}
+
+
