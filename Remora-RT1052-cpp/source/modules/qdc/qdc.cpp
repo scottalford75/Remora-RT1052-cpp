@@ -19,6 +19,21 @@ void muxPinsXBAR(const char* pin,xbar_output_signal_t kXBARA1_OutputEncInput)
     mux_op_pin = 5;
   else if(!strcmp(pin,"P4_15"))
     mux_op_pin = 6;
+  else if(!strcmp(pin,"P3_16"))
+  {
+	mux_op_pin = 7;
+	printf("P3_16 is only 5V tolerant, danger!!!!!!\r\n");
+  }
+  else if(!strcmp(pin,"P3_17"))
+  {
+	mux_op_pin = 8;
+	printf("P3_17 is only 5V tolerant, danger!!!!!!\r\n");
+  }
+  else if(!strcmp(pin,"P3_22"))
+  {
+	mux_op_pin = 9;
+	printf("P3_22 is only 5V tolerant, danger!!!!!!\r\n");
+  }
 
   switch(mux_op_pin)
   {
@@ -58,6 +73,24 @@ void muxPinsXBAR(const char* pin,xbar_output_signal_t kXBARA1_OutputEncInput)
 
 		XBARA_SetSignalsConnection(XBARA1, kXBARA1_InputIomuxXbarIn20, kXBARA1_OutputEncInput);
 		break;
+    case 7:
+		IOMUXC_SetPinMux(IOMUXC_GPIO_SD_B0_04_GPIO3_IO16, 1U);
+		IOMUXC_SetPinConfig(IOMUXC_GPIO_SD_B0_04_GPIO3_IO16, 0x10B0U);
+
+		XBARA_SetSignalsConnection(XBARA1, kXBARA1_InputIomuxXbarInout08, kXBARA1_OutputEncInput);
+		break;
+    case 8:
+		IOMUXC_SetPinMux(IOMUXC_GPIO_SD_B0_05_GPIO3_IO17, 1U);
+		IOMUXC_SetPinConfig(IOMUXC_GPIO_SD_B0_05_GPIO3_IO17, 0x10B0U);
+
+		XBARA_SetSignalsConnection(XBARA1, kXBARA1_InputIomuxXbarInout09, kXBARA1_OutputEncInput);
+		break;
+    case 9:
+		IOMUXC_SetPinMux(IOMUXC_GPIO_EMC_36_XBAR1_IN22, 1U);
+		IOMUXC_SetPinConfig(IOMUXC_GPIO_EMC_36_XBAR1_IN22, 0x10B0U);
+
+		XBARA_SetSignalsConnection(XBARA1, kXBARA1_InputIomuxXbarIn22, kXBARA1_OutputEncInput);
+		break;
     default:
     	break;
   }
@@ -77,6 +110,8 @@ void createQdc()
     const char* pinI = module["Index Pin"];
     int dataBit = module["Data Bit"];
     int encNumber = module["ENC No"];
+    int filt_per = module["Filter PER"];
+    int filt_cnt = module["Filter CNT"];
 
     ENC_Type* base = nullptr;
     IRQn_Type encIndexIrqId;
@@ -140,14 +175,14 @@ void createQdc()
 
     if (pinI == nullptr)
     {
-        Module* qdc = new Qdc(*ptrProcessVariable[pv],base);
+        Module* qdc = new Qdc(*ptrProcessVariable[pv],base, filt_per, filt_cnt);
         baseThread->registerModule(qdc);
     }
     else
     {
 
         printf("  Quadrature Encoder has index at pin %s\n", pinI);
-        Module* qdc = new Qdc(*ptrProcessVariable[pv], *ptrInputs, dataBit, base,encIndexIrqId);
+        Module* qdc = new Qdc(*ptrProcessVariable[pv], *ptrInputs, base, encIndexIrqId, dataBit, filt_per, filt_cnt);
         //NVIC_SetPriority(encIndexIrqId , 4);
         baseThread->registerModule(qdc);
     }
@@ -159,13 +194,18 @@ void createQdc()
 *                METHOD DEFINITIONS                                    *
 ************************************************************************/
 
-Qdc::Qdc(volatile float &ptrEncoderCount, ENC_Type* base):
-	ptrEncoderCount(&ptrEncoderCount),base(base)
+Qdc::Qdc(volatile float &ptrEncoderCount, ENC_Type* base, int filt_per, int filt_cnt):
+	ptrEncoderCount(&ptrEncoderCount),
+	base(base),
+	filt_per(filt_per),
+	filt_cnt(filt_cnt)
 {
     enc_config_t mEncConfigStruct;
 
     /* Initialize the ENC module. */
     ENC_GetDefaultConfig(&mEncConfigStruct);
+    mEncConfigStruct.filterSamplePeriod = this->filt_per;
+    mEncConfigStruct.filterCount = this->filt_cnt;
     ENC_Init(this->base, &mEncConfigStruct);
     ENC_DoSoftwareLoadInitialPositionValue(this->base); /* Update the position counter with initial value. */
 
@@ -173,12 +213,14 @@ Qdc::Qdc(volatile float &ptrEncoderCount, ENC_Type* base):
     this->count = 0;								// initialise the count to 0
 }
 
-Qdc::Qdc(volatile float &ptrEncoderCount, volatile uint32_t &ptrData, int bitNumber, ENC_Type* base,IRQn_Type irq) :
+Qdc::Qdc(volatile float &ptrEncoderCount, volatile uint32_t &ptrData, ENC_Type* base,IRQn_Type irq, int bitNumber, int filt_per, int filt_cnt) :
 	ptrEncoderCount(&ptrEncoderCount),
     ptrData(&ptrData),
-    bitNumber(bitNumber),
     base(base),
-	irq(irq)
+	irq(irq),
+    bitNumber(bitNumber),
+	filt_per(filt_per),
+	filt_cnt(filt_cnt)
 {
 
     interruptPtr = new QdcInterrupt(this->irq, this);
@@ -186,6 +228,8 @@ Qdc::Qdc(volatile float &ptrEncoderCount, volatile uint32_t &ptrData, int bitNum
     enc_config_t mEncConfigStruct;
     /* Initialize the ENC module. */
     ENC_GetDefaultConfig(&mEncConfigStruct);
+    mEncConfigStruct.filterSamplePeriod = this->filt_per;
+    mEncConfigStruct.filterCount = this->filt_cnt;
     ENC_Init(this->base, &mEncConfigStruct);
     ENC_DoSoftwareLoadInitialPositionValue(this->base); /* Update the position counter with initial value. */
 
