@@ -36,13 +36,17 @@ class Qdc : public Module
         volatile float *ptrEncoderCount; 	// pointer to the data source
         volatile uint32_t *ptrData; 		// pointer to the data source
 
-        int bitNumber;				// location in the data source
-        int mask;
-
         ENC_Type* base;
         IRQn_Type irq;
         QdcInterrupt* 	interruptPtr;
         void indexEvent();
+
+        int bitNumber;				// location in the data source
+        int mask;
+        int filt_per;
+        int filt_cnt;
+
+
 
         uint8_t state;
         int32_t count;
@@ -57,8 +61,8 @@ class Qdc : public Module
         Pin* pinB;      // channel B
         Pin* pinI;      // index
 
-        Qdc(volatile float&, ENC_Type*);
-        Qdc(volatile float&, volatile uint32_t&, int, ENC_Type*,IRQn_Type);
+        Qdc(volatile float&, ENC_Type*, int, int);
+        Qdc(volatile float&, volatile uint32_t&, ENC_Type*, IRQn_Type, int, int, int);
 
         virtual void update(void);	// Module default interface
 };
