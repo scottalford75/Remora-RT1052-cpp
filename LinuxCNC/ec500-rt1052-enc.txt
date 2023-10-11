@@ -135,10 +135,12 @@
     	"Thread": "Servo",
     	"Type": "QDC",
         	"Comment":            "QDC Encoder A-IN02 B-IN03",
-        	"PV[i]":                 0,
+        	"PV[i]":              0,
         	"ChA Pin":            "P4_13",
         	"ChB Pin":            "P4_14",
-		"ENC No":             1
+		"ENC No":             1,
+		"Filter PER":	      10,
+		"Filter CNT":	      4
 	},
 	{
 	"Thread": "Servo",
@@ -172,11 +174,13 @@
     	"Type": "QDC",
         	"Comment":            "QDC Encoder A-IN11 B-IN12 I-IN14",
         	"PV[i]":              1,
-		"Data Bit":	      17,
+		"Data Bit":           17,
         	"ChA Pin":            "P4_00",
         	"ChB Pin":            "P3_23",
 		"Index Pin":	      "P4_15",
-		"ENC No":             4
+		"ENC No":             2,
+		"Filter PER":	      10,
+		"Filter CNT":	      4
 	},
 	{
 	"Thread": "Servo",
