@@ -139,6 +139,7 @@ FILE *jsonFile;
 string strJson;
 DynamicJsonDocument doc(JSON_BUFF_SIZE);
 JsonObject thread;
+const char* board;
 JsonObject module;
 
 
@@ -348,12 +349,20 @@ void deserialiseJSON()
     }
 }
 
+void getBoardType()
+{
+	if (configError) return;
+
+	board = doc["Board"];
+
+	printf("\n3. Board Type: %s\n",board);
+}
 
 void configThreads()
 {
     if (configError) return;
 
-    printf("\n3. Configuring threads\n");
+    printf("\n4. Configuring threads\n");
 
     JsonArray Threads = doc["Threads"];
 
@@ -381,7 +390,7 @@ void configThreads()
 
 void loadModules(void)
 {
-    printf("\n4. Loading modules\n");
+    printf("\n5. Loading modules\n");
 
 	// Ethernet communication monitoring
 	comms = new RemoraComms();
@@ -474,6 +483,7 @@ int main(void)
 
      		              jsonFromFlash(strJson);
      		              deserialiseJSON();
+     		              getBoardType();
      		              configThreads();
      		              createThreads();
      		              //debugThreadHigh();

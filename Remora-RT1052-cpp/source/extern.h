@@ -12,6 +12,7 @@
 extern uint32_t base_freq;
 extern uint32_t servo_freq;
 
+extern const char* board;
 extern JsonObject module;
 
 extern volatile bool PRUreset;
