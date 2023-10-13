@@ -132,7 +132,7 @@
 		"Invert":			"False"
 	},
 	{
-    	"Thread": "Servo",
+    	"Thread": "Base",
     	"Type": "QDC",
         	"Comment":            "QDC Encoder A-IN02 B-IN03",
         	"PV[i]":              0,
