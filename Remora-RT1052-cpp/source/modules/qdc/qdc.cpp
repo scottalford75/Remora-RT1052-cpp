@@ -13,7 +13,7 @@ void muxPinsXBAR(const char* pin,xbar_output_signal_t kXBARA1_OutputEncInput)
 	mux_op_pin = 2;
   else if(!strcmp(pin,"P3_21"))
     mux_op_pin = 3;
-  else if(!strcmp(pin,"P4_00"))
+  else if(!strcmp(pin,"P4_00") && !strcmp(board,"EC500"))
     mux_op_pin = 4;
   else if(!strcmp(pin,"P3_23"))
     mux_op_pin = 5;
@@ -33,6 +33,16 @@ void muxPinsXBAR(const char* pin,xbar_output_signal_t kXBARA1_OutputEncInput)
   {
 	mux_op_pin = 9;
 	printf("P3_22 is only 5V tolerant, danger!!!!!!\r\n");
+  }
+  else if(!strcmp(pin,"P4_16") && !strcmp(board,"EC300"))
+  {
+	mux_op_pin = 10;
+  }
+  else
+  {
+	printf("********The %s pin cannot be multiplexed pad(pin)-/->XBAR-->Qdc********\r\n",pin);
+	printf("********The instance of the Qdc module could not be carried out********\r\n");
+	return;
   }
 
   switch(mux_op_pin)
@@ -90,6 +100,12 @@ void muxPinsXBAR(const char* pin,xbar_output_signal_t kXBARA1_OutputEncInput)
 		IOMUXC_SetPinConfig(IOMUXC_GPIO_EMC_36_XBAR1_IN22, 0x10B0U);
 
 		XBARA_SetSignalsConnection(XBARA1, kXBARA1_InputIomuxXbarIn22, kXBARA1_OutputEncInput);
+		break;
+    case 10:
+		IOMUXC_SetPinMux(IOMUXC_GPIO_EMC_16_XBAR1_IN21, 1U);
+		IOMUXC_SetPinConfig(IOMUXC_GPIO_EMC_16_XBAR1_IN21, 0x10B0U);
+
+		XBARA_SetSignalsConnection(XBARA1, kXBARA1_InputIomuxXbarIn21, kXBARA1_OutputEncInput);
 		break;
     default:
     	break;
