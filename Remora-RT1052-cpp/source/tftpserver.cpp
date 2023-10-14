@@ -268,9 +268,20 @@ static int IAP_tftp_process_write(struct udp_pcb *upcb, const ip_addr_t *to, int
   // Get ready to upload configuration
 
   // Stop the threads
-  printf("\nReceiving new configuration. Stopping threads..\n");
+  printf("\nReceiving new configuration.\n");
+  printf("Stopping threads.\n");
   baseThread->stopThread();
   servoThread->stopThread();
+
+
+  printf("\nDisabling Index Irqs Gpio Interrupts.\n");
+  for(uint8_t i=0; i<4;i++)
+  {
+	  if(qdc[i]!=nullptr)
+		  qdc[i]->disableInterrupt();
+	  else
+		  break;
+  }
 
   /* init flash */
   flexspi_nor_flash_init(FLEXSPI);
