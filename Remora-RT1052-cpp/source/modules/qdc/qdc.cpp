@@ -2,6 +2,7 @@
 #include "qdc.h"
 
 volatile bool initXBARA = true;
+Module* qdc[4] = {nullptr,nullptr,nullptr,nullptr};
 
 void muxPinsXBAR(const char* pin,xbar_output_signal_t kXBARA1_OutputEncInput)
 {
@@ -129,14 +130,19 @@ void createQdc()
     int filt_per = module["Filter PER"];
     int filt_cnt = module["Filter CNT"];
 
-    ENC_Type* base = nullptr;
-    IRQn_Type encIndexIrqId;
+	char port[3] = {0};
+	char pinNumber[3] = {0};
 
+    ENC_Type* encBase = nullptr;
+    GPIO_Type* gpioBase = nullptr;
+    IRQn_Type IndexIrqGpioPinId;
+    uint8_t indexPinGpioNumber;
 
     if(initXBARA == true)
     {
     	XBARA_Init(XBARA1);
     	initXBARA = false;
+
     }
 
     switch(encNumber)
@@ -144,45 +150,59 @@ void createQdc()
       case(1):
 		muxPinsXBAR(pinA,kXBARA1_OutputEnc1PhaseAInput);
 		muxPinsXBAR(pinB,kXBARA1_OutputEnc1PhaseBInput);
-		if(pinI != nullptr)
-		{
-		  muxPinsXBAR(pinI,kXBARA1_OutputEnc1Index);
-		}
-		base = ENC1;
-		encIndexIrqId = ENC1_IRQn;
+		encBase = ENC1;
       	break;
       case(2):
 		muxPinsXBAR(pinA,kXBARA1_OutputEnc2PhaseAInput);
 		muxPinsXBAR(pinB,kXBARA1_OutputEnc2PhaseBInput);
-		if(pinI != nullptr)
-		{
-		  muxPinsXBAR(pinI,kXBARA1_OutputEnc2Index);
-		}
-		base = ENC2;
-		encIndexIrqId = ENC2_IRQn;
+		encBase = ENC2;
       	break;
       case(3):
 		muxPinsXBAR(pinA,kXBARA1_OutputEnc3PhaseAInput);
 		muxPinsXBAR(pinB,kXBARA1_OutputEnc3PhaseBInput);
-		if(pinI != nullptr)
-		{
-	      muxPinsXBAR(pinI,kXBARA1_OutputEnc3Index);
-		}
-		base = ENC3;
-		encIndexIrqId = ENC3_IRQn;
+		encBase = ENC3;
       	break;
       case(4):
 		muxPinsXBAR(pinA,kXBARA1_OutputEnc4PhaseAInput);
 		muxPinsXBAR(pinB,kXBARA1_OutputEnc4PhaseBInput);
-		if(pinI != nullptr)
-		{
-	      muxPinsXBAR(pinI,kXBARA1_OutputEnc4Index);
-		}
-		base = ENC4;
-		encIndexIrqId = ENC4_IRQn;
+		encBase = ENC4;
       	break;
       default:
     	break;
+    }
+
+    if (!(pinI == nullptr))
+    {
+    	strncpy(port,pinI,2);
+    	strncpy(pinNumber,pinI+3,2);
+    	if(!strcmp(port,"P3"))
+    	{
+    		gpioBase = GPIO3;
+    		indexPinGpioNumber = atoi(pinNumber);
+    		printf("Index GPIO Pin Number: GPIO3_%d\n",indexPinGpioNumber);
+    		if(indexPinGpioNumber < 16)
+    		{
+    			IndexIrqGpioPinId = GPIO3_Combined_0_15_IRQn;
+    		}
+    		else
+    		{
+    			IndexIrqGpioPinId = GPIO3_Combined_16_31_IRQn;
+    		}
+    	}
+    	else if(!strcmp(port,"P4"))
+    	{
+    		gpioBase = GPIO4;
+    		indexPinGpioNumber = atoi(pinNumber);
+    		printf("Index GPIO Pin Number: GPIO4_%d\n",indexPinGpioNumber);
+    		if(indexPinGpioNumber < 16)
+    		{
+    			IndexIrqGpioPinId = GPIO4_Combined_0_15_IRQn;
+    		}
+    		else
+    		{
+    			IndexIrqGpioPinId = GPIO4_Combined_16_31_IRQn;
+    		}
+    	}
     }
 
 
@@ -191,18 +211,16 @@ void createQdc()
 
     if (pinI == nullptr)
     {
-        Module* qdc = new Qdc(*ptrProcessVariable[pv],base, filt_per, filt_cnt);
-        baseThread->registerModule(qdc);
+    	qdc[encNumber-1] = new Qdc(*ptrProcessVariable[pv],encBase, filt_per, filt_cnt);
+        baseThread->registerModule(qdc[encNumber-1]);
     }
     else
     {
-
         printf("  Quadrature Encoder has index at pin %s\n", pinI);
-        Module* qdc = new Qdc(*ptrProcessVariable[pv], *ptrInputs, base, encIndexIrqId, dataBit, filt_per, filt_cnt);
+        qdc[encNumber-1] = new Qdc(*ptrProcessVariable[pv], *ptrInputs, encBase, gpioBase, IndexIrqGpioPinId, indexPinGpioNumber, dataBit, filt_per, filt_cnt);
         //NVIC_SetPriority(encIndexIrqId , 4);
-        baseThread->registerModule(qdc);
+        baseThread->registerModule(qdc[encNumber-1]);
     }
-
 
 }
 
@@ -210,9 +228,9 @@ void createQdc()
 *                METHOD DEFINITIONS                                    *
 ************************************************************************/
 
-Qdc::Qdc(volatile float &ptrEncoderCount, ENC_Type* base, int filt_per, int filt_cnt):
+Qdc::Qdc(volatile float &ptrEncoderCount, ENC_Type* encBase, int filt_per, int filt_cnt):
 	ptrEncoderCount(&ptrEncoderCount),
-	base(base),
+	encBase(encBase),
 	filt_per(filt_per),
 	filt_cnt(filt_cnt)
 {
@@ -222,18 +240,22 @@ Qdc::Qdc(volatile float &ptrEncoderCount, ENC_Type* base, int filt_per, int filt
     ENC_GetDefaultConfig(&mEncConfigStruct);
     mEncConfigStruct.filterSamplePeriod = this->filt_per;
     mEncConfigStruct.filterCount = this->filt_cnt;
-    ENC_Init(this->base, &mEncConfigStruct);
-    ENC_DoSoftwareLoadInitialPositionValue(this->base); /* Update the position counter with initial value. */
+    ENC_Init(this->encBase, &mEncConfigStruct);
+    ENC_DoSoftwareLoadInitialPositionValue(this->encBase); /* Update the position counter with initial value. */
 
     this->hasIndex = false;
     this->count = 0;								// initialise the count to 0
 }
 
-Qdc::Qdc(volatile float &ptrEncoderCount, volatile uint32_t &ptrData, ENC_Type* base,IRQn_Type irq, int bitNumber, int filt_per, int filt_cnt) :
+Qdc::Qdc(volatile float &ptrEncoderCount, volatile uint32_t &ptrData, ENC_Type* encBase,
+		GPIO_Type* gpioBase, IRQn_Type irq, int indexPinGpioNumber,
+		int bitNumber, int filt_per, int filt_cnt) :
 	ptrEncoderCount(&ptrEncoderCount),
     ptrData(&ptrData),
-    base(base),
+    encBase(encBase),
+	gpioBase(gpioBase),
 	irq(irq),
+	indexPinGpioNumber(indexPinGpioNumber),
     bitNumber(bitNumber),
 	filt_per(filt_per),
 	filt_cnt(filt_cnt)
@@ -241,17 +263,23 @@ Qdc::Qdc(volatile float &ptrEncoderCount, volatile uint32_t &ptrData, ENC_Type* 
 
     interruptPtr = new QdcInterrupt(this->irq, this);
 
+    gpio_pin_config_t pinIndex_config = {
+        kGPIO_DigitalInput,
+        0,
+        kGPIO_IntRisingEdge,
+    };
+
     enc_config_t mEncConfigStruct;
     /* Initialize the ENC module. */
     ENC_GetDefaultConfig(&mEncConfigStruct);
     mEncConfigStruct.filterSamplePeriod = this->filt_per;
     mEncConfigStruct.filterCount = this->filt_cnt;
-    ENC_Init(this->base, &mEncConfigStruct);
-    ENC_DoSoftwareLoadInitialPositionValue(this->base); /* Update the position counter with initial value. */
+    ENC_Init(this->encBase, &mEncConfigStruct);
+    ENC_DoSoftwareLoadInitialPositionValue(this->encBase); /* Update the position counter with initial value. */
 
-    ENC_EnableInterrupts(this->base,kENC_INDEXPulseInterruptEnable);
-    EnableIRQ(this->irq); /* Enable the interrupt for ENC_INDEX. */
-    ENC_ClearStatusFlags(this->base, kENC_INDEXPulseFlag);
+    EnableIRQ(this->irq);
+    GPIO_PinInit(this->gpioBase, (uint32_t)(this->indexPinGpioNumber), &pinIndex_config);
+    GPIO_PortEnableInterrupts(this->gpioBase, 1U << (uint32_t)(this->indexPinGpioNumber));
 
     this->hasIndex = true;
     this->indexPulse = (PRU_BASEFREQ / PRU_SERVOFREQ) * 3;          // output the index pulse for 3 servo thread periods so LinuxCNC sees it
@@ -264,7 +292,7 @@ Qdc::Qdc(volatile float &ptrEncoderCount, volatile uint32_t &ptrData, ENC_Type* 
 
 void Qdc::update()
 {
-  this->count = ENC_GetPositionValue(this->base);
+  this->count = ENC_GetPositionValue(this->encBase);
 
   if (this->hasIndex)                                     // we have an index pin
   {
@@ -294,5 +322,16 @@ void Qdc::update()
 
 void Qdc::indexEvent()
 {
+	GPIO_PortClearInterruptFlags(this->gpioBase, 1U << this->indexPinGpioNumber);
 	this->indexDetected = true;
 }
+
+void Qdc::disableInterrupt()
+{
+	if(this->hasIndex)
+	{
+		printf("	Disabling Index Gpio Irq: %d",this->irq);
+		DisableIRQ(this->irq);
+	}
+}
+
