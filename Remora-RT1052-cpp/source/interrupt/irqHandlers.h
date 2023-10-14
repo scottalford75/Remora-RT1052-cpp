@@ -25,6 +25,7 @@ extern "C" {
 		__DSB();
 	}
 
+	//GPIO_Combined_IRQHandlers
 	void GPIO3_Combined_0_15_IRQHandler()
 	{
 		Interrupt::GPIO3_Combined_0_15_Wrapper();
