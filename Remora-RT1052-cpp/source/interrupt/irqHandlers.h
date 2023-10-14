@@ -25,32 +25,27 @@ extern "C" {
 		__DSB();
 	}
 
-	void ENC1_IRQHandler()
+	void GPIO3_Combined_0_15_IRQHandler()
 	{
-		if((ENC_GetStatusFlags(ENC1) & kENC_INDEXPulseFlag))
-		{
-			ENC_ClearStatusFlags(ENC1, kENC_INDEXPulseFlag);
-		}
+		Interrupt::GPIO3_Combined_0_15_Wrapper();
 		__DSB();
 	}
 
-	void ENC2_IRQHandler()
+	void GPIO3_Combined_16_31_IRQHandler()
 	{
-		if((ENC_GetStatusFlags(ENC2) & kENC_INDEXPulseFlag))
-		{
-			ENC_ClearStatusFlags(ENC2, kENC_INDEXPulseFlag);
-			Interrupt::ENC2_Wrapper();
-		}
+		Interrupt::GPIO3_Combined_16_31_Wrapper();
 		__DSB();
 	}
 
-	void ENC3_IRQHandler()
+	void GPIO4_Combined_0_15_IRQHandler()
 	{
-		if((ENC_GetStatusFlags(ENC3) & kENC_INDEXPulseFlag))
-		{
-			ENC_ClearStatusFlags(ENC3, kENC_INDEXPulseFlag);
-			Interrupt::ENC3_Wrapper();
-		}
+		Interrupt::GPIO4_Combined_0_15_Wrapper();
+		__DSB();
+	}
+
+	void GPIO4_Combined_16_31_IRQHandler()
+	{
+		Interrupt::GPIO4_Combined_16_31_Wrapper();
 		__DSB();
 	}
 
