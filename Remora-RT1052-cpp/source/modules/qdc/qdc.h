@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <iostream>
 #include <string>
+//#include <stdio.h>
 
 #include "configuration.h"
 #include "modules/module.h"
@@ -13,6 +14,7 @@
 #include "fsl_enc.h"
 #include "fsl_xbara.h"
 #include "fsl_xbarb.h"
+#include "fsl_gpio.h"
 
 #include "extern.h"
 
@@ -28,17 +30,17 @@ class Qdc : public Module
 
 	private:
 
-		std::string ChA;			// physical pin connection
-        std::string ChB;			// physical pin connection
-        std::string Index;			// physical pin connection
         bool hasIndex;
 
         volatile float *ptrEncoderCount; 	// pointer to the data source
         volatile uint32_t *ptrData; 		// pointer to the data source
 
-        ENC_Type* base;
+        ENC_Type* encBase;
+        GPIO_Type* gpioBase;
         IRQn_Type irq;
+        int indexPinGpioNumber;
         QdcInterrupt* 	interruptPtr;
+
         void indexEvent();
 
         int bitNumber;				// location in the data source
@@ -57,14 +59,10 @@ class Qdc : public Module
 
 	public:
 
-        Pin* pinA;      // channel A
-        Pin* pinB;      // channel B
-        Pin* pinI;      // index
-
         Qdc(volatile float&, ENC_Type*, int, int);
-        Qdc(volatile float&, volatile uint32_t&, ENC_Type*, IRQn_Type, int, int, int);
-
+        Qdc(volatile float&, volatile uint32_t&, ENC_Type*, GPIO_Type*, IRQn_Type, int, int, int, int);
         virtual void update(void);	// Module default interface
+        virtual void disableInterrupt(void);
 };
 
 #endif
