@@ -218,7 +218,7 @@ void createQdc()
     {
         printf("  Quadrature Encoder has index at pin %s\n", pinI);
         qdc[encNumber-1] = new Qdc(*ptrProcessVariable[pv], *ptrInputs, encBase, gpioBase, IndexIrqGpioPinId, indexPinGpioNumber, dataBit, filt_per, filt_cnt);
-        //NVIC_SetPriority(encIndexIrqId , 4);
+        NVIC_SetPriority(IndexIrqGpioPinId , 4);
         baseThread->registerModule(qdc[encNumber-1]);
     }
 
@@ -278,8 +278,8 @@ Qdc::Qdc(volatile float &ptrEncoderCount, volatile uint32_t &ptrData, ENC_Type* 
     ENC_DoSoftwareLoadInitialPositionValue(this->encBase); /* Update the position counter with initial value. */
 
     EnableIRQ(this->irq);
-    GPIO_PinInit(this->gpioBase, (uint32_t)(this->indexPinGpioNumber), &pinIndex_config);
-    GPIO_PortEnableInterrupts(this->gpioBase, 1U << (uint32_t)(this->indexPinGpioNumber));
+    GPIO_PinInit(this->gpioBase, this->indexPinGpioNumber, &pinIndex_config);
+    GPIO_PortEnableInterrupts(this->gpioBase, 1U << this->indexPinGpioNumber);
 
     this->hasIndex = true;
     this->indexPulse = (PRU_BASEFREQ / PRU_SERVOFREQ) * 3;          // output the index pulse for 3 servo thread periods so LinuxCNC sees it
@@ -322,8 +322,12 @@ void Qdc::update()
 
 void Qdc::indexEvent()
 {
-	GPIO_PortClearInterruptFlags(this->gpioBase, 1U << this->indexPinGpioNumber);
-	this->indexDetected = true;
+	if(GPIO_GetPinsInterruptFlags(this->gpioBase) & (1U << this->indexPinGpioNumber))
+	{
+		GPIO_PortClearInterruptFlags(this->gpioBase, 1U << this->indexPinGpioNumber);
+		this->indexDetected = true;
+	}
+
 }
 
 void Qdc::disableInterrupt()
