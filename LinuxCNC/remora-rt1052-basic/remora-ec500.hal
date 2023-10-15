@@ -4,6 +4,10 @@
 loadrt [KINS]KINEMATICS
 loadrt [EMCMOT]EMCMOT base_period_nsec=[EMCMOT]BASE_PERIOD servo_period_nsec=[EMCMOT]SERVO_PERIOD num_joints=[KINS]JOINTS
 
+# load the Simulate Encoder real-time component
+	
+	loadrt sim_encoder names=sim_encoder_0,sim_encoder_1
+
 # load the Remora real-time component
 
 	loadrt remora-nv
@@ -15,6 +19,10 @@ loadrt [EMCMOT]EMCMOT base_period_nsec=[EMCMOT]BASE_PERIOD servo_period_nsec=[EM
 	net user-request-enable <= iocontrol.0.user-request-enable	=> remora.reset
 	net remora-status 		<= remora.status 				=> iocontrol.0.emc-enable-in
 
+# add the Simulate Encoder functions to threads
+
+	addf sim-encoder.update-speed   servo-thread
+	addf sim-encoder.make-pulses    servo-thread
 
 # add the remora and motion functions to threads
 
@@ -53,3 +61,19 @@ loadrt [EMCMOT]EMCMOT base_period_nsec=[EMCMOT]BASE_PERIOD servo_period_nsec=[EM
 	net j2pos-cmd 		joint.2.motor-pos-cmd 	=> remora.joint.2.pos-cmd
 	net j2pos-fb 		remora.joint.2.pos-fb 	=> joint.2.motor-pos-fb
 	net j2enable 		joint.2.amp-enable-out 	=> remora.joint.2.enable
+
+# Sim Encoder
+	
+	setp sim_encoder_0.ppr 16
+	setp sim_encoder_0.scale 60
+
+	net phase_A_0		sim_encoder_0.phase-A	=>	remora.output.11
+	net phase_B_0		sim_encoder_0.phase-B	=>	remora.output.15
+	net phase_Z_0		sim_encoder_0.phase-Z	=>	remora.output.13 
+
+	setp sim_encoder_1.ppr 16
+	setp sim_encoder_1.scale 60
+
+	net phase_A_1		sim_encoder_1.phase-A	=>	remora.output.07
+	net phase_B_1		sim_encoder_1.phase-B	=>	remora.output.10
+	net phase_Z_1		sim_encoder_1.phase-Z	=>	remora.output.05
