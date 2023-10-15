@@ -60,8 +60,9 @@ along with this program; If not, see <http://www.gnu.org/licenses/>.
 #include "modules/module.h"
 #include "modules/blink/blink.h"
 #include "modules/encoder/encoder.h"
+#include "modules/qdc/qdc.h"
 #include "modules/comms/RemoraComms.h"
-#include "modules/pwm/spindlePWM.h"
+#include "modules/pwm/spindlePwm.h"
 #include "modules/stepgen/stepgen.h"
 #include "modules/digitalPin/digitalPin.h"
 #include "modules/nvmpg/nvmpg.h"
@@ -138,6 +139,7 @@ FILE *jsonFile;
 string strJson;
 DynamicJsonDocument doc(JSON_BUFF_SIZE);
 JsonObject thread;
+const char* board;
 JsonObject module;
 
 
@@ -347,12 +349,20 @@ void deserialiseJSON()
     }
 }
 
+void getBoardType()
+{
+	if (configError) return;
+
+	board = doc["Board"];
+
+	printf("\n3. Board Type: %s\n",board);
+}
 
 void configThreads()
 {
     if (configError) return;
 
-    printf("\n3. Configuring threads\n");
+    printf("\n4. Configuring threads\n");
 
     JsonArray Threads = doc["Threads"];
 
@@ -380,7 +390,7 @@ void configThreads()
 
 void loadModules(void)
 {
-    printf("\n4. Loading modules\n");
+    printf("\n5. Loading modules\n");
 
 	// Ethernet communication monitoring
 	comms = new RemoraComms();
@@ -410,6 +420,10 @@ void loadModules(void)
             {
                 createEncoder();
             }
+        	else if (!strcmp(type,"QDC"))
+        	{
+        		createQdc();
+        	}
          }
         else if (!strcmp(thread,"Servo"))
         {
@@ -469,6 +483,7 @@ int main(void)
 
      		              jsonFromFlash(strJson);
      		              deserialiseJSON();
+     		              getBoardType();
      		              configThreads();
      		              createThreads();
      		              //debugThreadHigh();

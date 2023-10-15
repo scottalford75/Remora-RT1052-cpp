@@ -6,12 +6,14 @@
 
 #include "../source/lib/ArduinoJson6/ArduinoJson.h"
 #include "../source/thread/pruThread.h"
+#include "../source/modules/qdc/qdc.h"
 
 #include "modules/comms/RemoraComms.h"
 
 extern uint32_t base_freq;
 extern uint32_t servo_freq;
 
+extern const char* board;
 extern JsonObject module;
 
 extern volatile bool PRUreset;
@@ -19,6 +21,9 @@ extern volatile bool PRUreset;
 // pointers to objects with global scope
 extern pruThread* baseThread;
 extern pruThread* servoThread;
+
+extern Module* qdc[4];
+
 extern RemoraComms* comms;
 extern Module* MPG;
 

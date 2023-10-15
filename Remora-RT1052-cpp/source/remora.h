@@ -2,6 +2,7 @@
 #define REMORA_H
 
 #include "configuration.h"
+#include <cstdint>
 
 #pragma pack(push, 1)
 
