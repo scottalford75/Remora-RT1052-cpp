@@ -145,15 +145,6 @@
 	{
 	"Thread": "Servo",
 	"Type": "Digital Pin",
-		"Comment":			"IN08",
-		"Pin":				"P3_21",
-		"Mode":				"Input",
-		"Data Bit":			11,
-		"Invert":			"False"
-	},
-	{
-	"Thread": "Servo",
-	"Type": "Digital Pin",
 		"Comment":			"IN09",
 		"Pin":				"P3_19",
 		"Mode":				"Input",
@@ -161,35 +152,30 @@
 		"Invert":			"False"
 	},
 	{
-	"Thread": "Servo",
-	"Type": "Digital Pin",
-		"Comment":			"IN10",
-		"Pin":				"P3_20",
-		"Mode":				"Input",
-		"Data Bit":			13,
-		"Invert":			"False"
-	},
-	{
     	"Thread": "Base",
     	"Type": "QDC",
-        	"Comment":            "QDC Encoder A-IN11 B-IN12 I-IN14",
+        	"Comment":            "QDC Encoder A-IN12 B-IN14 I-IN13",
         	"PV[i]":              1,
 		"Data Bit":           17,
-        	"ChA Pin":            "P4_00",
-        	"ChB Pin":            "P3_23",
-		"Index Pin":	      "P4_15",
+        	"ChA Pin":            "P3_23",
+        	"ChB Pin":            "P4_15",
+		"Index Pin":	      "P4_28",
 		"ENC No":             2,
 		"Filter PER":	      10,
 		"Filter CNT":	      4
 	},
 	{
-	"Thread": "Servo",
-	"Type": "Digital Pin",
-		"Comment":			"IN13",
-		"Pin":				"P4_28",
-		"Mode":				"Input",
-		"Data Bit":			16,
-		"Invert":			"False"
+    	"Thread": "Base",
+    	"Type": "QDC",
+        	"Comment":            "QDC Encoder A-IN8 B-IN11 I-IN10",
+        	"PV[i]":              2,
+		"Data Bit":           15,
+        	"ChA Pin":            "P3_21",
+        	"ChB Pin":            "P4_00",
+		"Index Pin":	      "P3_20",
+		"ENC No":             3,
+		"Filter PER":	      10,
+		"Filter CNT":	      4
 	},
 	{
 	"Thread": "Servo",
