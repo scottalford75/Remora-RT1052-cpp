@@ -136,7 +136,8 @@ void createQdc()
     ENC_Type* encBase = nullptr;
     GPIO_Type* gpioBase = nullptr;
     IRQn_Type IndexIrqGpioPinId;
-    uint8_t indexPinGpioNumber;
+    uint8_t indexPortNumber;
+    uint8_t indexPinInNumber;
 
     if(initXBARA == true)
     {
@@ -178,9 +179,10 @@ void createQdc()
     	if(!strcmp(port,"P3"))
     	{
     		gpioBase = GPIO3;
-    		indexPinGpioNumber = atoi(pinNumber);
-    		printf("Index GPIO Pin Number: GPIO3_%d\n",indexPinGpioNumber);
-    		if(indexPinGpioNumber < 16)
+    		indexPortNumber = 3;
+    		indexPinInNumber = atoi(pinNumber);
+    		printf("Index GPIO Pin Number: GPIO3_%d\n",indexPinInNumber);
+    		if(indexPinInNumber < 16)
     		{
     			IndexIrqGpioPinId = GPIO3_Combined_0_15_IRQn;
     		}
@@ -192,9 +194,10 @@ void createQdc()
     	else if(!strcmp(port,"P4"))
     	{
     		gpioBase = GPIO4;
-    		indexPinGpioNumber = atoi(pinNumber);
-    		printf("Index GPIO Pin Number: GPIO4_%d\n",indexPinGpioNumber);
-    		if(indexPinGpioNumber < 16)
+    		indexPortNumber = 4;
+    		indexPinInNumber = atoi(pinNumber);
+    		printf("Index GPIO Pin Number: GPIO4_%d\n",indexPinInNumber);
+    		if(indexPinInNumber < 16)
     		{
     			IndexIrqGpioPinId = GPIO4_Combined_0_15_IRQn;
     		}
@@ -217,7 +220,7 @@ void createQdc()
     else
     {
         printf("  Quadrature Encoder has index at pin %s\n", pinI);
-        qdc[encNumber-1] = new Qdc(*ptrProcessVariable[pv], *ptrInputs, encBase, gpioBase, IndexIrqGpioPinId, indexPinGpioNumber, dataBit, filt_per, filt_cnt);
+        qdc[encNumber-1] = new Qdc(*ptrProcessVariable[pv], *ptrInputs, encBase, gpioBase, IndexIrqGpioPinId, indexPortNumber, indexPinInNumber, dataBit, filt_per, filt_cnt);
         NVIC_SetPriority(IndexIrqGpioPinId , 4);
         baseThread->registerModule(qdc[encNumber-1]);
     }
@@ -248,26 +251,21 @@ Qdc::Qdc(volatile float &ptrEncoderCount, ENC_Type* encBase, int filt_per, int f
 }
 
 Qdc::Qdc(volatile float &ptrEncoderCount, volatile uint32_t &ptrData, ENC_Type* encBase,
-		GPIO_Type* gpioBase, IRQn_Type irq, int indexPinGpioNumber,
+		GPIO_Type* gpioBase, IRQn_Type irq, int indexPortNumber, int indexPinInNumber,
 		int bitNumber, int filt_per, int filt_cnt) :
 	ptrEncoderCount(&ptrEncoderCount),
     ptrData(&ptrData),
     encBase(encBase),
 	gpioBase(gpioBase),
 	irq(irq),
-	indexPinGpioNumber(indexPinGpioNumber),
+	indexPortNumber(indexPortNumber),
+	indexPinInNumber(indexPinInNumber),
     bitNumber(bitNumber),
 	filt_per(filt_per),
 	filt_cnt(filt_cnt)
 {
 
-    interruptPtr = new QdcInterrupt(this->irq, this);
-
-    gpio_pin_config_t pinIndex_config = {
-        kGPIO_DigitalInput,
-        0,
-        kGPIO_IntRisingEdge,
-    };
+    interruptPtr = new portInterrupt(this);
 
     enc_config_t mEncConfigStruct;
     /* Initialize the ENC module. */
@@ -276,10 +274,6 @@ Qdc::Qdc(volatile float &ptrEncoderCount, volatile uint32_t &ptrData, ENC_Type* 
     mEncConfigStruct.filterCount = this->filt_cnt;
     ENC_Init(this->encBase, &mEncConfigStruct);
     ENC_DoSoftwareLoadInitialPositionValue(this->encBase); /* Update the position counter with initial value. */
-
-    EnableIRQ(this->irq);
-    GPIO_PinInit(this->gpioBase, this->indexPinGpioNumber, &pinIndex_config);
-    GPIO_PortEnableInterrupts(this->gpioBase, 1U << this->indexPinGpioNumber);
 
     this->hasIndex = true;
     this->indexPulse = (PRU_BASEFREQ / PRU_SERVOFREQ) * 3;          // output the index pulse for 3 servo thread periods so LinuxCNC sees it
@@ -322,19 +316,15 @@ void Qdc::update()
 
 void Qdc::indexEvent()
 {
-	if(GPIO_GetPinsInterruptFlags(this->gpioBase) & (1U << this->indexPinGpioNumber))
-	{
-		GPIO_PortClearInterruptFlags(this->gpioBase, 1U << this->indexPinGpioNumber);
-		this->indexDetected = true;
-	}
-
+	this->indexDetected = true;
 }
 
 void Qdc::disableInterrupt()
 {
 	if(this->hasIndex)
 	{
-		printf("	Disabling Index Gpio Irq: %d",this->irq);
+		printf("	Disabling Index Gpio Irq: %d\n",this->irq);
+		GPIO_PortDisableInterrupts(this->gpioBase,1<<this->indexPinInNumber);
 		DisableIRQ(this->irq);
 	}
 }

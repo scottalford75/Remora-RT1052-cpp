@@ -1,6 +1,7 @@
 #ifndef QDC_H
 #define QDC_H
 
+#include <modules/qdc/portInterrupt.h>
 #include <cstdint>
 #include <iostream>
 #include <string>
@@ -8,8 +9,6 @@
 
 #include "configuration.h"
 #include "modules/module.h"
-#include "qdcInterrupt.h"
-
 #include "fsl_iomuxc.h"
 #include "fsl_enc.h"
 #include "fsl_xbara.h"
@@ -21,12 +20,12 @@
 void muxPinsXBAR(const char*,xbar_output_signal_t);
 void createQdc(void);
 
-class QdcInterrupt; // forward declaration
+class portInterrupt; // forward declaration
 
 class Qdc : public Module
 {
 
-	friend class QdcInterrupt;
+	friend class portInterrupt;
 
 	private:
 
@@ -38,8 +37,9 @@ class Qdc : public Module
         ENC_Type* encBase;
         GPIO_Type* gpioBase;
         IRQn_Type irq;
-        int indexPinGpioNumber;
-        QdcInterrupt* 	interruptPtr;
+        int indexPortNumber;
+        int indexPinInNumber;
+        portInterrupt* 	interruptPtr;
 
         void indexEvent();
 
@@ -47,8 +47,6 @@ class Qdc : public Module
         int mask;
         int filt_per;
         int filt_cnt;
-
-
 
         uint8_t state;
         int32_t count;
@@ -60,9 +58,10 @@ class Qdc : public Module
 	public:
 
         Qdc(volatile float&, ENC_Type*, int, int);
-        Qdc(volatile float&, volatile uint32_t&, ENC_Type*, GPIO_Type*, IRQn_Type, int, int, int, int);
+        Qdc(volatile float&, volatile uint32_t&, ENC_Type*, GPIO_Type*, IRQn_Type, int, int, int, int, int);
         virtual void update(void);	// Module default interface
         virtual void disableInterrupt(void);
+
 };
 
 #endif
