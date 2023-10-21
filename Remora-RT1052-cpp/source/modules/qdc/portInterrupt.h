@@ -2,17 +2,30 @@
 #define QDCINTERRUPT_H
 // Derived class for timer interrupts
 #include "../../interrupt/interrupt.h"
+#include "fsl_gpio.h"
+
 class Qdc; // forward declaration
 
-class QdcInterrupt : public Interrupt
+#define INDEX_PIN_COUNT_IRQn 4U
+
+class portInterrupt: public Interrupt
 {
+	protected:
+
+		static portInterrupt* IndexPinISRVectorTable[INDEX_PIN_COUNT_IRQn][INDEX_PIN_COUNT_IRQn];
+
 	private:
 
 		Qdc* InterruptOwnerPtr;
 
+        static void Register(IRQn_Type , portInterrupt*);
+
+
 	public:
 
-		QdcInterrupt(int , Qdc*);
+		portInterrupt(Qdc*);
+
+		static void GPIO34_Combined_Wrapper(IRQn_Type);
 
 		void ISR_Handler(void);
 };
