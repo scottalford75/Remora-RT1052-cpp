@@ -89,15 +89,6 @@
 	{
 	"Thread": "Servo",
 	"Type": "Digital Pin",
-		"Comment":			"IN01",
-		"Pin":				"P3_25",
-		"Mode":				"Input",
-		"Data Bit":			4,
-		"Invert":			"False"
-	},
-	{
-	"Thread": "Servo",
-	"Type": "Digital Pin",
 		"Comment":			"IN04",
 		"Pin":				"P3_24",
 		"Mode":				"Input",
@@ -132,17 +123,6 @@
 		"Invert":			"False"
 	},
 	{
-    	"Thread": "Base",
-    	"Type": "QDC",
-        	"Comment":            "QDC Encoder A-IN02 B-IN03",
-        	"PV[i]":              0,
-        	"ChA Pin":            "P4_13",
-        	"ChB Pin":            "P4_14",
-		"ENC No":             1,
-		"Filter PER":	      10,
-		"Filter CNT":	      4
-	},
-	{
 	"Thread": "Servo",
 	"Type": "Digital Pin",
 		"Comment":			"IN09",
@@ -150,6 +130,19 @@
 		"Mode":				"Input",
 		"Data Bit":			12,
 		"Invert":			"False"
+	},
+	{
+    	"Thread": "Base",
+    	"Type": "QDC",
+        	"Comment":            	"QDC Encoder A-IN02 B-IN03 I-IN01",
+        	"PV[i]":        	0,
+		"Data Bit":		4,
+        	"ChA Pin":            	"P4_13",
+        	"ChB Pin":            	"P4_14",
+		"Index Pin":		"P3_25",
+		"ENC No":             	1,
+		"Filter PER":	      	10,
+		"Filter CNT":	      	4
 	},
 	{
     	"Thread": "Base",
@@ -172,7 +165,7 @@
 		"Data Bit":           15,
         	"ChA Pin":            "P3_21",
         	"ChB Pin":            "P4_00",
-		"Index Pin":	      "P3_20",
+		"Index Pin":	      "P4_27",
 		"ENC No":             3,
 		"Filter PER":	      10,
 		"Filter CNT":	      4
