@@ -6,13 +6,14 @@
 
 class Qdc; // forward declaration
 
+#define PORT_COMBINED_IRQn 4U
 #define INDEX_PIN_COUNT_IRQn 4U
 
 class portInterrupt: public Interrupt
 {
 	protected:
 
-		static portInterrupt* IndexPinISRVectorTable[INDEX_PIN_COUNT_IRQn][INDEX_PIN_COUNT_IRQn];
+		static portInterrupt* IndexPinISRVectorTable[PORT_COMBINED_IRQn][INDEX_PIN_COUNT_IRQn];
 
 	private:
 

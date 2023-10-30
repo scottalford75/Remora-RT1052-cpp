@@ -2,7 +2,7 @@
 #include <modules/qdc/portInterrupt.h>
 #include "qdc.h"
 
-portInterrupt* portInterrupt::IndexPinISRVectorTable[INDEX_PIN_COUNT_IRQn][INDEX_PIN_COUNT_IRQn]={0};
+portInterrupt* portInterrupt::IndexPinISRVectorTable[PORT_COMBINED_IRQn][INDEX_PIN_COUNT_IRQn]={0};
 
 portInterrupt::portInterrupt(Qdc* owner):InterruptOwnerPtr(owner)
 {
@@ -28,7 +28,7 @@ void portInterrupt::Register(IRQn_Type irq,portInterrupt* intThisPtr)
 {
 	printf("Registering interrupt for interrupt number = %d\n", irq);
 
-	for(int i=0;i<INDEX_PIN_COUNT_IRQn;i++)
+	for(uint8_t i=0;i<INDEX_PIN_COUNT_IRQn;i++)
 	{
 		if(!IndexPinISRVectorTable[irq & 0x03][i])
 		{
@@ -41,7 +41,7 @@ void portInterrupt::Register(IRQn_Type irq,portInterrupt* intThisPtr)
 
 void portInterrupt::GPIO34_Combined_Wrapper(IRQn_Type combinedIrq)
 {
-	for(int i=0;i<INDEX_PIN_COUNT_IRQn;i++)
+	for(uint8_t i=0;i<INDEX_PIN_COUNT_IRQn;i++)
 	{
 		if(IndexPinISRVectorTable[combinedIrq & 0x03][i])
 		{
