@@ -28,22 +28,3 @@ void Interrupt::TIM2_Wrapper(void)
 	ISRVectorTable[GPT2_IRQn]->ISR_Handler();
 }
 
-void Interrupt::GPIO3_Combined_0_15_Wrapper(void)
-{
-	ISRVectorTable[GPIO3_Combined_0_15_IRQn]->ISR_Handler();
-}
-
-void Interrupt::GPIO3_Combined_16_31_Wrapper(void)
-{
-	ISRVectorTable[GPIO3_Combined_16_31_IRQn]->ISR_Handler();
-}
-
-void Interrupt::GPIO4_Combined_0_15_Wrapper(void)
-{
-	ISRVectorTable[GPIO4_Combined_0_15_IRQn]->ISR_Handler();
-}
-
-void Interrupt::GPIO4_Combined_16_31_Wrapper(void)
-{
-	ISRVectorTable[GPIO4_Combined_16_31_IRQn]->ISR_Handler();
-}

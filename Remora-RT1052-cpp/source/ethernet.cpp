@@ -105,17 +105,32 @@ void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
 {
 	int txlen = 0;
 	struct pbuf *txBuf;
+	//Lets reduce time by getting the header information before doing memcpy
+
+	int32_t header =
+			*(uint8_t*)((p->payload + (sizeof(uint8_t) * 0))) |
+			(*(uint8_t*)((p->payload + (sizeof(uint8_t) * 1))) << 8) |
+			(*(uint8_t*)((p->payload + (sizeof(uint8_t) * 2))) << 16) |
+			(*(uint8_t*)((p->payload + (sizeof(uint8_t) * 3))) << 24);/*int32_t(
+				*(uint8_t*)((p->payload + (sizeof(uint8_t) * 0))) << 24 |
+				*(uint8_t*)((p->payload + (sizeof(uint8_t) * 1))) << 16 |
+				*(uint8_t*)((p->payload + (sizeof(uint8_t) * 2))) << 8 |
+				*(uint8_t*)((p->payload + (sizeof(uint8_t) * 3)))
+			);*/
+
+	//We have header information we won't be using memcpy because if its PRU_READ there will be no use for it
+	// because linuxcnc just wants to read us and well memcpy for no reason takes time, so we comment it out. :)
 
 	// copy the UDP payload into the rxData structure
-	memcpy(&rxBuffer.rxBuffer, p->payload, p->len);
+	//memcpy(&rxBuffer.rxBuffer, p->payload, p->len);
 
-	if (rxBuffer.header == PRU_READ)
+	if (header == PRU_READ)
 	{
 		txData.header = PRU_DATA;
 		txlen = BUFFER_SIZE;
 		comms->dataReceived();
 	}
-	else if (rxBuffer.header == PRU_WRITE)
+	else if (header == PRU_WRITE)
 	{
 		txData.header = PRU_ACKNOWLEDGE;
 		txlen = sizeof(txData.header);
@@ -124,12 +139,15 @@ void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
 		// ensure an atomic access to the rxBuffer
 		// disable thread interrupts
 		__disable_irq();
-
+		//pragma pack should support memcpy, we should later look into the networking driver and see where p comes from,
+		// and see if we can provide a data location to memcpy it in to which should further reduce cpu-time.
+		// Of course not a lot but every little bit is enough.
+		memcpy(&rxData.rxBuffer, p->payload, p->len);
 		// then move the data
-		for (int i = 0; i < BUFFER_SIZE; i++)
+		/*for (int i = 0; i < BUFFER_SIZE; i++)
 		{
 			rxData.rxBuffer[i] = rxBuffer.rxBuffer[i];
-		}
+		}*/
 
 		// re-enable thread interrupts
 		__enable_irq();

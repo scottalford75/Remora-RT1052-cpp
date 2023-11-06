@@ -29,7 +29,6 @@ class Module
 		virtual void slowUpdate();	// the standard interface for the slow update - use for PID controller etc
         virtual void configure();   // the standard interface for one off configuration
         virtual void handleInterrupt();
-        virtual void disableInterrupt();
 
 };
 

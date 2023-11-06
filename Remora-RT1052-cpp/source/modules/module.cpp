@@ -46,4 +46,3 @@ void Module::updatePost(){}
 void Module::slowUpdate(){}
 void Module::configure(){}
 void Module::handleInterrupt(){}
-void Module::disableInterrupt(){}

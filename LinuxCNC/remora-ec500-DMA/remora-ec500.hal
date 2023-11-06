@@ -6,7 +6,7 @@ loadrt [EMCMOT]EMCMOT base_period_nsec=[EMCMOT]BASE_PERIOD servo_period_nsec=[EM
 
 # load the Remora real-time component
 
-	loadrt remora-nv
+	loadrt remora-nv PRU_base_freq=500000
 
 
 # estop and SPI comms enable and feedback
@@ -29,6 +29,7 @@ loadrt [EMCMOT]EMCMOT base_period_nsec=[EMCMOT]BASE_PERIOD servo_period_nsec=[EM
 
 	setp remora.joint.0.scale 		[JOINT_0]SCALE
 	setp remora.joint.0.maxaccel 	[JOINT_0]STEPGEN_MAXACCEL
+	setp remora.joint.0.pgain		[JOINT_0]PGAIN
 
 	net j0pos-cmd 		joint.0.motor-pos-cmd 	=> remora.joint.0.pos-cmd
 	net j0pos-fb 		remora.joint.0.pos-fb 	=> joint.0.motor-pos-fb
@@ -39,6 +40,7 @@ loadrt [EMCMOT]EMCMOT base_period_nsec=[EMCMOT]BASE_PERIOD servo_period_nsec=[EM
 
 	setp remora.joint.1.scale 		[JOINT_1]SCALE
 	setp remora.joint.1.maxaccel 	[JOINT_1]STEPGEN_MAXACCEL
+	setp remora.joint.1.pgain		[JOINT_1]PGAIN
 
 	net j1pos-cmd 		joint.1.motor-pos-cmd 	=> remora.joint.1.pos-cmd
 	net j1pos-fb 		remora.joint.1.pos-fb 	=> joint.1.motor-pos-fb
@@ -47,8 +49,9 @@ loadrt [EMCMOT]EMCMOT base_period_nsec=[EMCMOT]BASE_PERIOD servo_period_nsec=[EM
 
 # joint 2 setup (Z axis)
 
-	setp remora.joint.2.scale [JOINT_2]SCALE
-	setp remora.joint.2.maxaccel [JOINT_2]STEPGEN_MAXACCEL
+	setp remora.joint.2.scale 		[JOINT_2]SCALE
+	setp remora.joint.2.maxaccel 	[JOINT_2]STEPGEN_MAXACCEL
+	setp remora.joint.2.pgain		[JOINT_2]PGAIN
 
 	net j2pos-cmd 		joint.2.motor-pos-cmd 	=> remora.joint.2.pos-cmd
 	net j2pos-fb 		remora.joint.2.pos-fb 	=> joint.2.motor-pos-fb
