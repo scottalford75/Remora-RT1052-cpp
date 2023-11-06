@@ -1,0 +1,356 @@
+
+{
+	"Board": "EC500",
+	"Modules":[
+	{
+	"Thread": "Base",
+	"Type": "Stepgen",
+		"Comment":			"X - Joint 0 step generator",
+		"Joint Number":		0,
+		"Step Pin": 		"P1_22",
+		"Direction Pin": 	"P1_17"
+	},
+	{
+	"Thread": "Base",
+	"Type": "Stepgen",
+		"Comment":			"Y - Joint 1 step generator",
+		"Joint Number":		1,
+		"Step Pin": 		"P1_24",
+		"Direction Pin": 	"P1_31"
+	},
+	{
+	"Thread": "Base",
+	"Type": "Stepgen",
+		"Comment":			"Z - Joint 2 step generator",
+		"Joint Number":		2,
+		"Step Pin": 		"P1_18",
+		"Direction Pin": 	"P1_25"
+	},
+	{
+	"Thread": "Base",
+	"Type": "Stepgen",
+		"Comment":			"A - Joint 3 step generator",
+		"Joint Number":		3,
+		"Step Pin": 		"P1_27",
+		"Direction Pin": 	"P1_21"
+	},
+	{
+	"Thread": "Base",
+	"Type": "Stepgen",
+		"Comment":			"B - Joint 4 step generator",
+		"Joint Number":		4,
+		"Step Pin": 		"P1_16",
+		"Direction Pin": 	"P1_23"
+	},
+	{
+	"Thread": "Base",
+	"Type": "Stepgen",
+		"Comment":			"C - Joint 5 step generator",
+		"Joint Number":		5,
+		"Step Pin": 		"P1_20",
+		"Direction Pin": 	"P1_19"
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"FHA",
+		"Pin":				"P3_26",
+		"Mode":				"Input",
+		"Data Bit":			0,
+		"Invert":			"False"
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"FHB",
+		"Pin":				"P4_30",
+		"Mode":				"Input",
+		"Data Bit":			1,
+		"Invert":			"False"
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"SRO",
+		"Pin":				"P3_22",
+		"Mode":				"Input",
+		"Data Bit":			2,
+		"Invert":			"False"
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"SRJ",
+		"Pin":				"P4_24",
+		"Mode":				"Input",
+		"Data Bit":			3,
+		"Invert":			"False"
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"IN01",
+		"Pin":				"P3_25",
+		"Mode":				"Input",
+		"Data Bit":			4,
+		"Invert":			"False"
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"IN04",
+		"Pin":				"P3_24",
+		"Mode":				"Input",
+		"Data Bit":			7,
+		"Invert":			"False"
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"IN05",
+		"Pin":				"P3_18",
+		"Mode":				"Input",
+		"Data Bit":			8,
+		"Invert":			"False"
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"IN06",
+		"Pin":				"P4_31",
+		"Mode":				"Input",
+		"Data Bit":			9,
+		"Invert":			"False"
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"IN07",
+		"Pin":				"P4_27",
+		"Mode":				"Input",
+		"Data Bit":			10,
+		"Invert":			"False"
+	},
+	{
+    	"Thread": "Base",
+    	"Type": "QDC",
+        	"Comment":            "QDC Encoder A-IN02 B-IN03",
+        	"PV[i]":              0,
+        	"ChA Pin":            "P4_13",
+        	"ChB Pin":            "P4_14",
+		"ENC No":             1,
+		"Filter PER":	      10,
+		"Filter CNT":	      4
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"IN09",
+		"Pin":				"P3_19",
+		"Mode":				"Input",
+		"Data Bit":			12,
+		"Invert":			"False"
+	},
+	{
+    	"Thread": "Base",
+    	"Type": "QDC",
+        	"Comment":            "QDC Encoder A-IN12 B-IN14 I-IN13",
+        	"PV[i]":              1,
+		"Data Bit":           17,
+        	"ChA Pin":            "P3_23",
+        	"ChB Pin":            "P4_15",
+		"Index Pin":	      "P4_28",
+		"ENC No":             2,
+		"Filter PER":	      10,
+		"Filter CNT":	      4
+	},
+	{
+    	"Thread": "Base",
+    	"Type": "QDC",
+        	"Comment":            "QDC Encoder A-IN8 B-IN11 I-IN10",
+        	"PV[i]":              2,
+		"Data Bit":           15,
+        	"ChA Pin":            "P3_21",
+        	"ChB Pin":            "P4_00",
+		"Index Pin":	      "P3_20",
+		"ENC No":             3,
+		"Filter PER":	      10,
+		"Filter CNT":	      4
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"IN15",
+		"Pin":				"P4_25",
+		"Mode":				"Input",
+		"Data Bit":			18,
+		"Invert":			"False"
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"IN16",
+		"Pin":				"P4_09",
+		"Mode":				"Input",
+		"Data Bit":			19,
+		"Invert":			"False"
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"WHA",
+		"Pin":				"P3_16",
+		"Mode":				"Input",
+		"Data Bit":			20,
+		"Invert":			"False"
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"WHB",
+		"Pin":				"P3_17",
+		"Mode":				"Input",
+		"Data Bit":			21,
+		"Invert":			"False"
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"OT01",
+		"Pin":				"P3_12",
+		"Mode":				"Output",
+		"Data Bit":			0
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"OT02",
+		"Pin":				"P3_13",
+		"Mode":				"Output",
+		"Data Bit":			1
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"OT03",
+		"Pin":				"P4_07",
+		"Mode":				"Output",
+		"Data Bit":			2
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"OT04",
+		"Pin":				"P4_08",
+		"Mode":				"Output",
+		"Data Bit":			3
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"OT05",
+		"Pin":				"P4_06",
+		"Mode":				"Output",
+		"Data Bit":			4
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"OT06",
+		"Pin":				"P3_15",
+		"Mode":				"Output",
+		"Data Bit":			5
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"OT07",
+		"Pin":				"P4_05",
+		"Mode":				"Output",
+		"Data Bit":			6
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"OT08",
+		"Pin":				"P3_14",
+		"Mode":				"Output",
+		"Data Bit":			7
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"OT09",
+		"Pin":				"P4_12",
+		"Mode":				"Output",
+		"Data Bit":			8
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"OT10",
+		"Pin":				"P4_03",
+		"Mode":				"Output",
+		"Data Bit":			9
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"OT11",
+		"Pin":				"P4_11",
+		"Mode":				"Output",
+		"Data Bit":			10
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"OT12",
+		"Pin":				"P4_02",
+		"Mode":				"Output",
+		"Data Bit":			11
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"OT13",
+		"Pin":				"P4_10",
+		"Mode":				"Output",
+		"Data Bit":			12
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"OT14",
+		"Pin":				"P4_01",
+		"Mode":				"Output",
+		"Data Bit":			13
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"OT15",
+		"Pin":				"P4_04",
+		"Mode":				"Output",
+		"Data Bit":			14
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Digital Pin",
+		"Comment":			"OT16",
+		"Pin":				"P4_29",
+		"Mode":				"Output",
+		"Data Bit":			15
+	},
+	{
+	"Thread": "Servo",
+	"Type": "Spindle PWM",
+		"Comment":			"Spindle PWM",
+		"SP[i]":			0
+	},
+	{
+	"Thread": "Servo",
+	"Type": "NVMPG",
+		"Comment":			"NVMPG"
+	}
+	]
+}

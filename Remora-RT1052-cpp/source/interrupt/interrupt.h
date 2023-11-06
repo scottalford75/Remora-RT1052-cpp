@@ -21,6 +21,11 @@ class Interrupt
 		static void TIM1_Wrapper();
         static void TIM2_Wrapper();
 
+        static void GPIO3_Combined_0_15_Wrapper();
+        static void GPIO3_Combined_16_31_Wrapper();
+        static void GPIO4_Combined_0_15_Wrapper();
+        static void GPIO4_Combined_16_31_Wrapper();
+
 		virtual void ISR_Handler(void) = 0;
 
 };

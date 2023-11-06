@@ -6,30 +6,24 @@
 
 #include "../source/lib/ArduinoJson6/ArduinoJson.h"
 #include "../source/thread/pruThread.h"
+#include "../source/modules/qdc/qdc.h"
 
 #include "modules/comms/RemoraComms.h"
 
 extern uint32_t base_freq;
 extern uint32_t servo_freq;
 
+extern const char* board;
 extern JsonObject module;
 
 extern volatile bool PRUreset;
-extern bool hasBaseThread;
-extern bool hasServoThread;
-extern bool hasDMAthread;
-
-
-// DMA stepgen double buffers
-extern int32_t stepgenDMAbuffer_0[DMA_BUFFER_SIZE];
-extern int32_t stepgenDMAbuffer_1[DMA_BUFFER_SIZE];
-extern vector<Module*> vDMAthread;
-extern vector<Module*>::iterator iterDMA;
-extern bool stepgenDMAbuffer;
 
 // pointers to objects with global scope
 extern pruThread* baseThread;
 extern pruThread* servoThread;
+
+extern Module* qdc[4];
+
 extern RemoraComms* comms;
 extern Module* MPG;
 
