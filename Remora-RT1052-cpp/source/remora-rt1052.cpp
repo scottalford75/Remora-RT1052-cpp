@@ -96,6 +96,8 @@ bool threadsRunning = false;
 bool DMAstepgenRunning = false;
 
 
+edma_handle_t TFTP_EDMA_Handle;
+
 // DMA stepgen double buffers
 AT_NONCACHEABLE_SECTION_INIT(int32_t stepgenDMAbuffer_0[DMA_BUFFER_SIZE]);		// double buffers for port DMA transfers
 AT_NONCACHEABLE_SECTION_INIT(int32_t stepgenDMAbuffer_1[DMA_BUFFER_SIZE]);
@@ -103,9 +105,10 @@ vector<Module*> vDMAthread;
 vector<Module*>::iterator iterDMA;
 bool DMAstepgen = false;
 bool stepgenDMAbuffer = false;					// indicates which double buffer to use 0 or 1
-edma_handle_t g_EDMA_Handle;
-volatile bool g_transferDone = false;
+edma_handle_t stepgen_EDMA_Handle;
+volatile bool DMAtransferDone = false;
 AT_QUICKACCESS_SECTION_DATA_ALIGN(edma_tcd_t tcdMemoryPoolPtr[3], sizeof(edma_tcd_t));
+int32_t tcd_0, tcd_1, tcd_next;
 
 // pointers to objects with global scope
 pruThread* servoThread;
@@ -465,28 +468,10 @@ void loadModules(void)
     }
 }
 
-/*void debugThreadHigh()
-{
-    //Module* debugOnB = new Debug("PE_13", 1);
-    //baseThread->registerModule(debugOnB);
-
-    Module* debugOnS = new Debug("P1_22", 1);
-    servoThread->registerModule(debugOnS);
-}
-
-void debugThreadLow()
-{
-    //Module* debugOffB = new Debug("PE_13", 0);
-    //baseThread->registerModule(debugOffB);
-
-    Module* debugOffS = new Debug("P1_22", 0);
-    servoThread->registerModule(debugOffS);
-}*/
-
 
 void EDMA_Callback(edma_handle_t *handle, void *param, bool transferDone, uint32_t tcds)
 {
-	g_transferDone = true;
+	DMAtransferDone = true;
 }
 
 
@@ -527,9 +512,9 @@ void DMAconfig(void)
 
 	EDMA_GetDefaultConfig(&userConfig);
 	EDMA_Init(DMA0, &userConfig);
-	EDMA_CreateHandle(&g_EDMA_Handle, DMA0, 0);
-	EDMA_SetCallback(&g_EDMA_Handle, EDMA_Callback, NULL);
-	EDMA_ResetChannel(g_EDMA_Handle.base, g_EDMA_Handle.channel);
+	EDMA_CreateHandle(&stepgen_EDMA_Handle, DMA0, 0);
+	EDMA_SetCallback(&stepgen_EDMA_Handle, EDMA_Callback, NULL);
+	EDMA_ResetChannel(stepgen_EDMA_Handle.base, stepgen_EDMA_Handle.channel);
 
 	/* prepare descriptor 0 */
 	EDMA_PrepareTransfer((edma_transfer_config_t *)&transferConfig, stepgenDMAbuffer_0, sizeof(stepgenDMAbuffer_0[0]), (uint32_t*)&GPIO1->DR_TOGGLE, sizeof(GPIO1->DR_TOGGLE),
@@ -549,7 +534,8 @@ void DMAconfig(void)
 
 	EDMA_InstallTCD(DMA0, 0, tcdMemoryPoolPtr);
 
-	//EDMA_StartTransfer(&g_EDMA_Handle);
+	tcd_0 = &tcdMemoryPoolPtr[0];
+	tcd_1 = &tcdMemoryPoolPtr[1];
 }
 
 
@@ -569,12 +555,6 @@ int main(void)
     prevState = ST_RESET;
 
     printf("\nRemora RT1052 starting\n\n");
-
-
-    //Module* debugOn1 = new Debug("P1_17", 1);
-    //Module* debugOff1 = new Debug("P1_17", 0);
-    //Module* debugOn2 = new Debug("P1_31", 1);
-    //Module* debugOff2 = new Debug("P1_31", 0);
 
     initEthernet();
 
@@ -597,7 +577,7 @@ int main(void)
      		              loadModules();
      		              //debugThreadLow();
      		              udpServer_init();
-     		              IAP_tftpd_init(g_EDMA_Handle);
+     		              IAP_tftpd_init(TFTP_EDMA_Handle);
 
      		              currentState = ST_START;
      		              break;
@@ -662,11 +642,11 @@ int main(void)
      		              }
      		              prevState = currentState;
 
-     		              if (DMAstepgenRunning == false)
+     		              if (hasDMAthread && !DMAstepgenRunning)
      		              {
      		            	  // fill the buffer and kick off DMA, we should be in sync with LinuxCNC servo thread now
      		            	 for (iterDMA = vDMAthread.begin(); iterDMA != vDMAthread.end(); ++iterDMA) (*iterDMA)->runModule();
-     		            	 EDMA_StartTransfer(&g_EDMA_Handle);
+     		            	 EDMA_StartTransfer(&stepgen_EDMA_Handle);
      		            	 DMAstepgenRunning = true;
      		            	 printf("   Starting DMA Stepgen\n");
      		              }
@@ -711,7 +691,8 @@ int main(void)
 
      		              if (DMAstepgenRunning)
      		              {
-     		            	 EDMA_AbortTransfer(&g_EDMA_Handle);
+     		            	 EDMA_AbortTransfer(&stepgen_EDMA_Handle);
+     		            	 EDMA_Deinit(DMA0);
      		            	 DMAconfig();
      		            	 DMAstepgenRunning = false;
      		            	 printf("   Stopping DMA Stepgen\n");
@@ -729,27 +710,25 @@ int main(void)
         EthernetTasks();
 
 
-    	if (g_transferDone)
+    	if (DMAtransferDone)
     	{
+    		tcd_next = EDMA_GetNextTCDAddress(&stepgen_EDMA_Handle);
 
-
-    		// clear the DMA buffer ready for next use
-    		if (stepgenDMAbuffer)
+    		if (tcd_next == tcd_0)
     		{
+    			stepgenDMAbuffer = false;
     			memset(stepgenDMAbuffer_0, 0, sizeof(stepgenDMAbuffer_0));
     		}
-    		else
+    		else if (tcd_next == tcd_1)
     		{
+    			stepgenDMAbuffer = true;
     			memset(stepgenDMAbuffer_1, 0, sizeof(stepgenDMAbuffer_1));
     		}
-
-			// switch buffers
-			stepgenDMAbuffer = !stepgenDMAbuffer;
 
     		// prepare the next DMA buffer
     		for (iterDMA = vDMAthread.begin(); iterDMA != vDMAthread.end(); ++iterDMA) (*iterDMA)->runModule();
 
-    		g_transferDone = false;
+    		DMAtransferDone = false;
     	}
 
 
