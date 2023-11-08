@@ -1,0 +1,65 @@
+{
+	"Board": "EC500",
+	"Modules":[
+	{
+	"Thread": "DMA",
+	"Type": "DMAstepgen",
+		"Comment":			"X - Joint 0 step generator",
+		"Joint Number":		0,
+		"Step Pin": 		"P1_22",
+		"Direction Pin": 	"P1_17",
+		"Step Length":		1,
+		"Step Space":		1
+	},
+	{
+	"Thread": "DMA",
+	"Type": "DMAstepgen",
+		"Comment":			"Y - Joint 1 step generator",
+		"Joint Number":		1,
+		"Step Pin": 		"P1_24",
+		"Direction Pin": 	"P1_31",
+		"Step Length":		1,
+		"Step Space":		1
+	},
+	{
+	"Thread": "DMA",
+	"Type": "DMAstepgen",
+		"Comment":			"Z - Joint 2 step generator",
+		"Joint Number":		2,
+		"Step Pin": 		"P1_18",
+		"Direction Pin": 	"P1_25",
+		"Step Length":		1,
+		"Step Space":		1
+	},
+	{
+	"Thread": "DMA",
+	"Type": "DMAstepgen",
+		"Comment":			"A - Joint 3 step generator",
+		"Joint Number":		3,
+		"Step Pin": 		"P1_27",
+		"Direction Pin": 	"P1_21",
+		"Step Length":		1,
+		"Step Space":		1
+	},
+	{
+	"Thread": "DMA",
+	"Type": "DMAstepgen",
+		"Comment":			"B - Joint 4 step generator",
+		"Joint Number":		4,
+		"Step Pin": 		"P1_16",
+		"Direction Pin": 	"P1_23",
+		"Step Length":		1,
+		"Step Space":		1
+	},
+	{
+	"Thread": "DMA",
+	"Type": "DMAstepgen",
+		"Comment":			"C - Joint 5 step generator",
+		"Joint Number":		5,
+		"Step Pin": 		"P1_20",
+		"Direction Pin": 	"P1_19",
+		"Step Length":		1,
+		"Step Space":		1
+	}
+	]
+}

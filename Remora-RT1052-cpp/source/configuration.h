@@ -1,8 +1,14 @@
 #ifndef CONFIGURATION_H
 #define CONFIGURATION_H
 
+#define DMA_FREQ			500000			// DMA stepgen frequency = 2 x 500kHz
 #define PRU_BASEFREQ    	40000    		// PRU Base thread ISR update frequency (hz)
 #define PRU_SERVOFREQ       1000            // PRU Servo thread ISR update freqency (hz)
+
+#define FREQ_RATIO 			DMA_FREQ/ PRU_SERVOFREQ
+#define DMA_BUFFER_SIZE		2 * FREQ_RATIO
+#define RESOLUTION			1000				// multiply and divide resolution for integer calculations
+#define BUFFER_COUNTS		FREQ_RATIO * RESOLUTION
 
 #define STEPBIT     		22            	// bit location in DDS accum
 #define STEP_MASK   		(1L<<STEPBIT)
