@@ -96,8 +96,6 @@ bool threadsRunning = false;
 bool DMAstepgenRunning = false;
 
 
-edma_handle_t TFTP_EDMA_Handle;
-
 // DMA stepgen double buffers
 AT_NONCACHEABLE_SECTION_INIT(int32_t stepgenDMAbuffer_0[DMA_BUFFER_SIZE]);		// double buffers for port DMA transfers
 AT_NONCACHEABLE_SECTION_INIT(int32_t stepgenDMAbuffer_1[DMA_BUFFER_SIZE]);
@@ -577,7 +575,7 @@ int main(void)
      		              loadModules();
      		              //debugThreadLow();
      		              udpServer_init();
-     		              IAP_tftpd_init(TFTP_EDMA_Handle);
+     		              IAP_tftpd_init(stepgen_EDMA_Handle);
 
      		              currentState = ST_START;
      		              break;
