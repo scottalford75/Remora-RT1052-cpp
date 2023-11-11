@@ -2,7 +2,7 @@
 #include "qdc.h"
 
 volatile bool initXBARA = true;
-Module* qdc[4] = {nullptr,nullptr,nullptr,nullptr};
+Module* qdc[MAX_INST_QDC_MOD] = {nullptr,nullptr,nullptr,nullptr};
 
 void muxPinsXBAR(const char* pin,xbar_output_signal_t kXBARA1_OutputEncInput)
 {
