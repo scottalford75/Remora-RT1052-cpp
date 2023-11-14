@@ -6,12 +6,14 @@
 
 #include "../source/lib/ArduinoJson6/ArduinoJson.h"
 #include "../source/thread/pruThread.h"
+#include "../source/modules/qdc/qdc.h"
 
 #include "modules/comms/RemoraComms.h"
 
 extern uint32_t base_freq;
 extern uint32_t servo_freq;
 
+extern const char* board;
 extern JsonObject module;
 
 extern volatile bool PRUreset;
@@ -19,6 +21,7 @@ extern bool hasBaseThread;
 extern bool hasServoThread;
 extern bool hasDMAthread;
 
+extern Module* qdc[MAX_INST_QDC_MOD];
 
 // DMA stepgen double buffers
 extern int32_t stepgenDMAbuffer_0[DMA_BUFFER_SIZE];

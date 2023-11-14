@@ -1,0 +1,104 @@
+{
+	"Board": "EC500",
+	"Modules":[
+	{
+	"Thread": "DMA",
+	"Type": "DMAstepgen",
+		"Comment":			"X - Joint 0 step generator",
+		"Joint Number":		0,
+		"Step Pin": 		"P1_22",
+		"Direction Pin": 	"P1_17",
+		"Step Length":		1,
+		"Step Space":		1
+	},
+	{
+	"Thread": "DMA",
+	"Type": "DMAstepgen",
+		"Comment":			"Y - Joint 1 step generator",
+		"Joint Number":		1,
+		"Step Pin": 		"P1_24",
+		"Direction Pin": 	"P1_31",
+		"Step Length":		1,
+		"Step Space":		1
+	},
+	{
+	"Thread": "DMA",
+	"Type": "DMAstepgen",
+		"Comment":			"Z - Joint 2 step generator",
+		"Joint Number":		2,
+		"Step Pin": 		"P1_18",
+		"Direction Pin": 	"P1_25",
+		"Step Length":		1,
+		"Step Space":		1
+	},
+	{
+	"Thread": "DMA",
+	"Type": "DMAstepgen",
+		"Comment":			"A - Joint 3 step generator",
+		"Joint Number":		3,
+		"Step Pin": 		"P1_27",
+		"Direction Pin": 	"P1_21",
+		"Step Length":		1,
+		"Step Space":		1
+	},
+	{
+	"Thread": "DMA",
+	"Type": "DMAstepgen",
+		"Comment":			"B - Joint 4 step generator",
+		"Joint Number":		4,
+		"Step Pin": 		"P1_16",
+		"Direction Pin": 	"P1_23",
+		"Step Length":		1,
+		"Step Space":		1
+	},
+	{
+	"Thread": "DMA",
+	"Type": "DMAstepgen",
+		"Comment":			"C - Joint 5 step generator",
+		"Joint Number":		5,
+		"Step Pin": 		"P1_20",
+		"Direction Pin": 	"P1_19",
+		"Step Length":		1,
+		"Step Space":		1
+	},
+	{
+    	"Thread": "Base",
+    	"Type": "QDC",
+        	"Comment":            	"QDC Encoder A-IN02 B-IN03 I-IN01",
+        	"PV[i]":        	0,
+		"Data Bit":		4,
+        	"ChA Pin":            	"P4_13",
+        	"ChB Pin":            	"P4_14",
+		"Index Pin":		"P3_25",
+		"ENC No":             	1,
+		"Filter PER":	      	10,
+		"Filter CNT":	      	4
+	},
+	{
+    	"Thread": "Base",
+    	"Type": "QDC",
+        	"Comment":            "QDC Encoder A-IN12 B-IN14 I-IN13",
+        	"PV[i]":              1,
+		"Data Bit":           17,
+        	"ChA Pin":            "P3_23",
+        	"ChB Pin":            "P4_15",
+		"Index Pin":	      "P4_28",
+		"ENC No":             2,
+		"Filter PER":	      10,
+		"Filter CNT":	      4
+	},
+	{
+    	"Thread": "Base",
+    	"Type": "QDC",
+        	"Comment":            "QDC Encoder A-IN8 B-IN11 I-IN10",
+        	"PV[i]":              2,
+		"Data Bit":           15,
+        	"ChA Pin":            "P3_21",
+        	"ChB Pin":            "P4_00",
+		"Index Pin":	      "P4_27",
+		"ENC No":             3,
+		"Filter PER":	      10,
+		"Filter CNT":	      4
+	}
+	]
+}
