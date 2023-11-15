@@ -139,15 +139,12 @@ void udp_data_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip
 		// ensure an atomic access to the rxBuffer
 		// disable thread interrupts
 		__disable_irq();
+
+		// then move the data
 		//pragma pack should support memcpy, we should later look into the networking driver and see where p comes from,
 		// and see if we can provide a data location to memcpy it in to which should further reduce cpu-time.
 		// Of course not a lot but every little bit is enough.
 		memcpy(&rxData.rxBuffer, p->payload, p->len);
-		// then move the data
-		/*for (int i = 0; i < BUFFER_SIZE; i++)
-		{
-			rxData.rxBuffer[i] = rxBuffer.rxBuffer[i];
-		}*/
 
 		// re-enable thread interrupts
 		__enable_irq();

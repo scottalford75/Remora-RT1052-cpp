@@ -25,7 +25,7 @@
 #define PRU_ESTOP           0x65737470  	// "estp" payload
 #define PRU_NVMPG			0x6D706764
 
-#define BUFFER_SIZE			68
+#define BUFFER_SIZE			64
 
 #define DATA_ERR_MAX		5
 

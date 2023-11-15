@@ -293,7 +293,7 @@ void Qdc::update()
       // handle index, index pulse and pulse count
       if (this->indexDetected && (this->pulseCount == 0))    // index interrupt occured: rising edge on index pulse
       {
-          *(this->ptrEncoderCount) = this->count;
+          *(this->ptrEncoderCount) = this->indexCount;
           this->pulseCount = this->indexPulse;
           *(this->ptrData) |= this->mask;                 // set bit in data source high
       }
@@ -317,6 +317,7 @@ void Qdc::update()
 void Qdc::indexEvent()
 {
 	this->indexDetected = true;
+	this->indexCount = ENC_GetPositionValue(this->encBase);
 }
 
 void Qdc::disableInterrupt()

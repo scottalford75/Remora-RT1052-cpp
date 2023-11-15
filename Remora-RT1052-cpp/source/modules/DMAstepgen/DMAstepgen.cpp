@@ -25,7 +25,7 @@ void createDMAstepgen()
 
     // create the step generator, register it in the thread
     Module* stepgen = new DMAstepgen(DMA_FREQ, joint, step, dir, DMA_BUFFER_SIZE, STEPBIT, *ptrJointFreqCmd[joint], *ptrJointFeedback[joint], *ptrJointEnable, stepLength, stepSpace, dirSetup);
-    vDMAthread.push_back(stepgen);
+    dmaThread->registerModule(stepgen);
 }
 
 
@@ -213,7 +213,8 @@ void DMAstepgen::makePulses()
 
 				// update DDS accumulator (for compatibility with software stepgen)
 				this->DDSaccumulator = this->rawCount << this->stepBit;
-				*(this->ptrFeedback) = this->DDSaccumulator;                     // Update position feedback via pointer to the data receiver
+				//*(this->ptrFeedback) = this->DDSaccumulator;                     // Update position feedback via pointer to the data receiver
+				*(this->ptrFeedback) = this->rawCount;                     // Update position feedback via pointer to the data receiver
 			}
 			else
 			{

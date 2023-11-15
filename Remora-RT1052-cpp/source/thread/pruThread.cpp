@@ -12,18 +12,45 @@ pruThread::pruThread(GPT_Type* timer, IRQn_Type irq, uint32_t frequency) :
 	irq(irq),
 	frequency(frequency)
 {
-	printf("Creating thread %d\n", (int)this->frequency);
+	printf("Creating timer ISR thread %d\n", (int)this->frequency);
+	this->isISRthread = true;
+}
+
+
+pruThread::pruThread(DMA_Type* DMAn, uint32_t frequency) :
+	DMAn(DMAn),
+	frequency(frequency)
+{
+	printf("Creating DMA thread %d\n", (int)this->frequency);
+	DMAptr = new DMA(this->DMAn, this->frequency);
+	this->DMAptr->configDMA();
+	this->isDMAthread = true;
 }
 
 
 void pruThread::startThread(void)
 {
-	TimerPtr = new pruTimer(this->timer, this->irq, this->frequency, this);
+	if (isISRthread)
+	{
+		TimerPtr = new pruTimer(this->timer, this->irq, this->frequency, this);
+	}
+	else if (isDMAthread)
+	{
+		this->DMAptr->startDMA();
+	}
 }
 
 void pruThread::stopThread(void)
 {
-    this->TimerPtr->stopTimer();
+	if (isISRthread)
+	{
+	    this->TimerPtr->stopTimer();
+	}
+	else if (isDMAthread)
+	{
+		this->DMAptr->stopDMA();
+	}
+
 }
 
 

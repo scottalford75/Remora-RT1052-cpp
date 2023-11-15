@@ -283,14 +283,18 @@ static int IAP_tftp_process_write(struct udp_pcb *upcb, const ip_addr_t *to, int
 	  DMAMUX_Deinit(DMAMUX);
   }
 
-  printf("\nDisabling Index Irqs Gpio Interrupts.\n");
-  for(uint8_t i=0; i<MAX_INST_QDC_MOD;i++)
+  if (hasQDC)
   {
-	  if(qdc[i]!=nullptr)
-		  qdc[i]->disableInterrupt();
-	  else
-		  break;
+	  printf("\nDisabling Index Irqs Gpio Interrupts.\n");
+	  for(uint8_t i=0; i<MAX_INST_QDC_MOD;i++)
+	  {
+		  if(qdc[i]!=nullptr)
+			  qdc[i]->disableInterrupt();
+		  else
+			  break;
+	  }
   }
+
 
   /* init flash */
   flexspi_nor_flash_init(FLEXSPI);

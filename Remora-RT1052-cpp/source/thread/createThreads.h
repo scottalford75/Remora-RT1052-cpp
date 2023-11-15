@@ -8,4 +8,6 @@ void createThreads(void)
 
     servoThread = new pruThread(GPT2, GPT2_IRQn , servo_freq);
     NVIC_SetPriority(GPT2_IRQn , 3);
+
+    dmaThread = new pruThread(DMA0, dma_freq);
 }
