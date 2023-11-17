@@ -26,8 +26,9 @@ class DMAstepgen : public Module
     volatile int32_t *ptrFeedback;       	// pointer where to put the feedback
     volatile uint8_t *ptrJointEnable;
 
-    uint8_t stepLength;						// step time in number of DMA periods
+    uint8_t stepLength;						// step time in number of DMA periods: 1 micro second
     uint8_t stepSpace;						// step space in number of DMA periods
+    uint8_t dirHold;						// direction hold in number of DMA periods
     uint8_t dirSetup;						// direction setup in number of DMA periods
 
     int32_t *stepDMAbuffer;
@@ -66,7 +67,7 @@ class DMAstepgen : public Module
 
   public:
 
-    DMAstepgen(int32_t, int, std::string, std::string, int, int, volatile int32_t&, volatile int32_t&, volatile uint8_t&, uint8_t, uint8_t, uint8_t);  // constructor
+    DMAstepgen(int32_t, int, std::string, std::string, int, int, volatile int32_t&, volatile int32_t&, volatile uint8_t&, uint8_t, uint8_t, uint8_t, uint8_t);  // constructor
 
     Pin *stepPin, *directionPin, *debug;		// class object members - Pin objects
 

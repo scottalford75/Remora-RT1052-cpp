@@ -16,6 +16,7 @@ void createDMAstepgen()
     const char* dir = module["Direction Pin"];
     int stepLength = module["Step Length"];
     int stepSpace = module["Step Space"];
+    int dirHold = module["Dir Hold"];
     int dirSetup = module["Dir Setup"];
 
     // configure pointers to data source and feedback location
@@ -24,7 +25,7 @@ void createDMAstepgen()
     ptrJointEnable = &rxData.jointEnable;
 
     // create the step generator, register it in the thread
-    Module* stepgen = new DMAstepgen(DMA_FREQ, joint, step, dir, DMA_BUFFER_SIZE, STEPBIT, *ptrJointFreqCmd[joint], *ptrJointFeedback[joint], *ptrJointEnable, stepLength, stepSpace, dirSetup);
+    Module* stepgen = new DMAstepgen(DMA_FREQ, joint, step, dir, DMA_BUFFER_SIZE, STEPBIT, *ptrJointFreqCmd[joint], *ptrJointFeedback[joint], *ptrJointEnable, stepLength, stepSpace, dirHold, dirSetup);
     dmaThread->registerModule(stepgen);
 }
 
@@ -33,7 +34,7 @@ void createDMAstepgen()
                 METHOD DEFINITIONS
 ************************************************************************/
 
-DMAstepgen::DMAstepgen(int32_t threadFreq, int jointNumber, std::string step, std::string direction, int DMAbufferSize, int stepBit, volatile int32_t &ptrFrequencyCommand, volatile int32_t &ptrFeedback, volatile uint8_t &ptrJointEnable, uint8_t stepLength, uint8_t stepSpace, uint8_t dirSetup) :
+DMAstepgen::DMAstepgen(int32_t threadFreq, int jointNumber, std::string step, std::string direction, int DMAbufferSize, int stepBit, volatile int32_t &ptrFrequencyCommand, volatile int32_t &ptrFeedback, volatile uint8_t &ptrJointEnable, uint8_t stepLength, uint8_t stepSpace, uint8_t dirHold, uint8_t dirSetup) :
 	jointNumber(jointNumber),
 	step(step),
 	direction(direction),
@@ -44,6 +45,7 @@ DMAstepgen::DMAstepgen(int32_t threadFreq, int jointNumber, std::string step, st
 	ptrJointEnable(&ptrJointEnable),
 	stepLength(stepLength),
 	stepSpace(stepSpace),
+	dirHold(dirHold),
 	dirSetup(dirSetup)
 {
 	uint8_t pin, pin2;
@@ -68,6 +70,7 @@ DMAstepgen::DMAstepgen(int32_t threadFreq, int jointNumber, std::string step, st
 
 	if (this->stepLength == 0) this->stepLength = 1;
 	if (this->stepSpace == 0) this->stepSpace = 1;
+	if (this->dirHold == 0) this->dirHold = 1;
 	if (this->dirSetup == 0) this->dirSetup = 1;
 
 	this->minAddValue = (this->stepLength + this->stepSpace) * (RESOLUTION / 2);
