@@ -6,6 +6,10 @@ Supported boards: NVEM, EC300, EC500
 
 v1.0 of the firware now has dynamic configuration capability via TFTP upload of a configuration file. This allows users to load only the modules needed for their application and to assign IO numbering as required.
 
-v1.0.0 is now released for testing.
+v1.0.0 released for testing.
 
-v2.1.0 is now relased. Stepgen running at up to 500khz via DMA.
+v2.1.0 released. Stepgen running at up to 500khz via DMA.
+
+v3.0.0 released 15.11.23. Major change to Remora-eth component.
+
+v3.1.0 released 17.11.23. Addition of dirHold parameter to DMA stepgen.
