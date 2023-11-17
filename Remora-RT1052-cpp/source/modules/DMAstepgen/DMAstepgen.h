@@ -60,6 +60,7 @@ class DMAstepgen : public Module
   	int32_t remainder;
   	int32_t prevRemainder;
   	int16_t stepPos;
+  	int16_t dirPos;
   	int16_t stepHigh;
   	int16_t stepLow;
 

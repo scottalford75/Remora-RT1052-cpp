@@ -149,15 +149,6 @@ void DMAstepgen::makePulses()
 				stepDMAbuffer = stepDMAbuffer_1;
 			}
 
-			// finish the step from the previous period if needed
-			if (this->isStepping)
-			{
-				// put step low into DMA buffer
-				*(stepDMAbuffer + this->stepLow) |= this->stepMask;
-				this->stepLow = 0;
-				this->isStepping = false;
-			}
-
 			// what's the direction for this period
 			if (this->frequencyCommand < 0)
 			{
@@ -171,10 +162,36 @@ void DMAstepgen::makePulses()
 			// change of direction?
 			if (this->dir != this->oldDir)
 			{
-				// toggle the direction pin
-				*stepDMAbuffer |= this->dirMask;
 				this->oldDir = this->dir;
 				this->dirChange = true;
+			}
+
+			if (this->dirChange)
+			{
+				if (this->isStepping)
+				{
+					this->dirPos = this->stepLow + this->dirHold;
+				}
+				else if (this->prevRemainder < this->dirHold)
+				{
+					this->dirPos = this->dirHold - this->prevRemainder;
+				}
+				else
+				{
+					this->dirPos = 0;
+				}
+
+				// toggle the direction pin
+				*(stepDMAbuffer + this->dirPos) |= this->dirMask;
+			}
+
+			// finish the step from the previous period if needed
+			if (this->isStepping)
+			{
+				// put step low into DMA buffer
+				*(stepDMAbuffer + this->stepLow) |= this->stepMask;
+				this->stepLow = 0;
+				this->isStepping = false;
 			}
 
 			// accumulator cannot go negative, so keep prevRemainder within limits
@@ -187,6 +204,16 @@ void DMAstepgen::makePulses()
 			{
 				// at least one step in this period
 				this->accumulator = this->addValue - this->prevRemainder;
+
+				if (this->dirChange)
+				{
+					this->stepPos = (this->dirPos + this->dirSetup)*(RESOLUTION/2);
+					if (this->accumulator < this->stepPos)
+					{
+						this->accumulator = this->stepPos;
+					}
+				}
+
 				this->remainder = BUFFER_COUNTS - this->accumulator;
 
 				// ensure we are within the buffer size
