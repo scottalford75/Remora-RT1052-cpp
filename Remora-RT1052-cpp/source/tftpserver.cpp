@@ -273,7 +273,7 @@ static int IAP_tftp_process_write(struct udp_pcb *upcb, const ip_addr_t *to, int
   if (hasBaseThread) baseThread->stopThread();
   if (hasServoThread) servoThread->stopThread();
 
-  if (hasDMAthread)
+  if (hasDMAthread && DMAthreadRunning)
   {
 	  EDMA_StopTransfer(&edma_handle);
 	  EDMA_ResetChannel(edma_handle.base, edma_handle.channel);

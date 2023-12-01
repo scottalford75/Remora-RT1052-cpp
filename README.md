@@ -13,3 +13,5 @@ v2.1.0 released. Stepgen running at up to 500khz via DMA.
 v3.0.0 released 15.11.23. Major change to Remora-eth component.
 
 v3.1.0 released 17.11.23. Addition of dirHold parameter to DMA stepgen.
+
+v3.1.1.bug fix released 2.12.23. Fixed direction not always correct in DMA stepgen.

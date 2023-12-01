@@ -23,6 +23,7 @@ extern bool hasBaseThread;
 extern bool hasServoThread;
 extern bool hasDMAthread;
 extern bool hasQDC;
+extern bool DMAthreadRunning;
 
 extern Module* qdc[MAX_INST_QDC_MOD];
 

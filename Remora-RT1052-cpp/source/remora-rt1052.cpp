@@ -652,32 +652,12 @@ int main(void)
 
         EthernetTasks();
 
-
     	if (DMA::DMAtransferDone)
     	{
     		dmaThread->DMAptr->updateBuffers();
-    		/*
-    		tcd_next = EDMA_GetNextTCDAddress(&stepgen_EDMA_Handle);
-
-    		if (tcd_next == tcd_0)
-    		{
-    			stepgenDMAbuffer = false;
-    			memset(stepgenDMAbuffer_0, 0, sizeof(stepgenDMAbuffer_0));
-    		}
-    		else if (tcd_next == tcd_1)
-    		{
-    			stepgenDMAbuffer = true;
-    			memset(stepgenDMAbuffer_1, 0, sizeof(stepgenDMAbuffer_1));
-    		}
-    		*/
-
-    		// prepare the next DMA buffer
-    		//for (iterDMA = vDMAthread.begin(); iterDMA != vDMAthread.end(); ++iterDMA) (*iterDMA)->runModule();
     		dmaThread->run();
-
     		DMA::DMAtransferDone = false;
     	}
-
 
         if (newJson)
 		{

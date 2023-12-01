@@ -149,6 +149,9 @@ void DMAstepgen::makePulses()
 				stepDMAbuffer = stepDMAbuffer_1;
 			}
 
+			// get the current dir output
+			this->oldDir = this->directionPin->get();
+
 			// what's the direction for this period
 			if (this->frequencyCommand < 0)
 			{
@@ -162,7 +165,6 @@ void DMAstepgen::makePulses()
 			// change of direction?
 			if (this->dir != this->oldDir)
 			{
-				this->oldDir = this->dir;
 				this->dirChange = true;
 			}
 
