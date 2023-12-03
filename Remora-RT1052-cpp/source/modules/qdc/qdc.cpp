@@ -85,14 +85,14 @@ void muxPinsXBAR(const char* pin,xbar_output_signal_t kXBARA1_OutputEncInput)
 		XBARA_SetSignalsConnection(XBARA1, kXBARA1_InputIomuxXbarIn20, kXBARA1_OutputEncInput);
 		break;
     case 7:
-		IOMUXC_SetPinMux(IOMUXC_GPIO_SD_B0_04_GPIO3_IO16, 1U);
-		IOMUXC_SetPinConfig(IOMUXC_GPIO_SD_B0_04_GPIO3_IO16, 0x10B0U);
+		IOMUXC_SetPinMux(IOMUXC_GPIO_SD_B0_04_XBAR1_INOUT08, 1U);
+		IOMUXC_SetPinConfig(IOMUXC_GPIO_SD_B0_04_XBAR1_INOUT08, 0x10B0U);
 
 		XBARA_SetSignalsConnection(XBARA1, kXBARA1_InputIomuxXbarInout08, kXBARA1_OutputEncInput);
 		break;
     case 8:
-		IOMUXC_SetPinMux(IOMUXC_GPIO_SD_B0_05_GPIO3_IO17, 1U);
-		IOMUXC_SetPinConfig(IOMUXC_GPIO_SD_B0_05_GPIO3_IO17, 0x10B0U);
+		IOMUXC_SetPinMux(IOMUXC_GPIO_SD_B0_05_XBAR1_INOUT09, 1U);
+		IOMUXC_SetPinConfig(IOMUXC_GPIO_SD_B0_05_XBAR1_INOUT09, 0x10B0U);
 
 		XBARA_SetSignalsConnection(XBARA1, kXBARA1_InputIomuxXbarInout09, kXBARA1_OutputEncInput);
 		break;
@@ -214,6 +214,7 @@ void createQdc()
 
     if (pinI == nullptr)
     {
+    	printf("  Quadrature Encoder without index pin %s\n", pinI);
     	qdc[encNumber-1] = new Qdc(*ptrProcessVariable[pv],encBase, filt_per, filt_cnt);
         baseThread->registerModule(qdc[encNumber-1]);
     }
