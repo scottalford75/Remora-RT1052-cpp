@@ -1,0 +1,17 @@
+# Halshow settings
+# This file is generated automatically.
+wm geometry . 623x329+814+685
+placeFrames 0.36151079136690645
+set ::ratio 0.36151079136690645
+set ::old_w_leftf 160
+set ::watchlist {
+    pin+remora.PV.0
+    pin+joint.0.f-error
+}
+set ::workmode watchhal
+set ::watchInterval 100
+set ::col1_width 100
+set ::ffmts 
+set ::ifmts 
+set ::alwaysOnTop 0
+set ::autoSaveWatchlist 1

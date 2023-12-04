@@ -3,7 +3,7 @@
 
 #include "MIMXRT1052.h"
 #include "timer.h"
-#include "DMA.h"
+#include "dma.h"
 
 // Standard Template Library (STL) includes
 #include <vector>
