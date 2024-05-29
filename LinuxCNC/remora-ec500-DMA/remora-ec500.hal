@@ -6,7 +6,7 @@ loadrt [EMCMOT]EMCMOT base_period_nsec=[EMCMOT]BASE_PERIOD servo_period_nsec=[EM
 
 # load the Remora real-time component
 
-	loadrt remora-nv PRU_base_freq=500000
+	loadrt remora-eth-3.0 PRU_base_freq=500000
 
 
 # estop and SPI comms enable and feedback
