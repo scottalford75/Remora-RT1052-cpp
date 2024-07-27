@@ -16,8 +16,8 @@
 
 #define NVMPG_LPUART                LPUART5
 #define LPUART_CLK_FREQ           	BOARD_DebugConsoleSrcFreq()
-#define LPUART_TX_DMA_CHANNEL       0U
-#define LPUART_RX_DMA_CHANNEL       1U
+#define LPUART_TX_DMA_CHANNEL       1U								// DMA stepgen uses channel 0
+#define LPUART_RX_DMA_CHANNEL       2U								// DMA stepgen uses channel 0
 #define LPUART_TX_DMA_REQUEST       kDmaRequestMuxLPUART5Tx
 #define LPUART_RX_DMA_REQUEST       kDmaRequestMuxLPUART5Rx
 #define LPUART_DMAMUX_BASEADDR 		DMAMUX

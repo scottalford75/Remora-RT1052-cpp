@@ -25,14 +25,14 @@ void DMA::configDMA(void)
 
 	/* Configure DMAMUX */
 	DMAMUX_Init(DMAMUX);
-	DMAMUX_EnableAlwaysOn(DMAMUX, 0, true);
-	DMAMUX_EnableChannel(DMAMUX, 0);
+	DMAMUX_EnableAlwaysOn(DMAMUX, STPGEN_DMA_CHANNEL, true);
+	DMAMUX_EnableChannel(DMAMUX, STPGEN_DMA_CHANNEL);
 
-	DMAMUX_EnablePeriodTrigger(DMAMUX, 0);
+	DMAMUX_EnablePeriodTrigger(DMAMUX, STPGEN_DMA_CHANNEL);
 
 	EDMA_GetDefaultConfig(&this->userConfig);
 	EDMA_Init(this->DMAn, &this->userConfig);
-	EDMA_CreateHandle(&this->EDMA_Handle, this->DMAn, 0);
+	EDMA_CreateHandle(&this->EDMA_Handle, this->DMAn, STPGEN_DMA_CHANNEL);
 	EDMA_SetCallback(&this->EDMA_Handle, this->EDMA_Callback, NULL);
 	EDMA_ResetChannel(this->EDMA_Handle.base, this->EDMA_Handle.channel);
 

@@ -530,7 +530,7 @@ int main(void)
      		              loadModules();
      		              //debugThreadLow();
      		              udpServer_init();
-     		              IAP_tftpd_init(dmaThread->DMAptr->EDMA_Handle);
+     		              IAP_tftpd_init(dmaThread->DMAptr->EDMA_Handle); // pass the dmaThread EDMA handle as we need to stop the DMA during a config upload
 
      		              currentState = ST_START;
      		              break;

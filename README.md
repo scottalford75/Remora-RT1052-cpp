@@ -17,3 +17,5 @@ v3.1.0 released 17.11.2023. Addition of dirHold parameter to DMA stepgen.
 v3.1.1 bug fix released 2.12.2023. Fixed direction not always correct in DMA stepgen.
 
 v3.1.2 bug fix released 5.12.2023. QDC encode XBAR mapping corrected. Closed loop example configuration added.
+
+v3.1.3 bug fix released 27.07.2024. Fixed NVMPG DMA channel clash with DMA stepgen causing garbage display.

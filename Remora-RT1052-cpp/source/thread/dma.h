@@ -10,6 +10,8 @@
 
 #include "extern.h"
 
+#define STPGEN_DMA_CHANNEL       0U	// NVMGP uses channel 1 and 2
+
 
 class DMA
 {
