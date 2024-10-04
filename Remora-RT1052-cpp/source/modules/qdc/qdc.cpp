@@ -143,30 +143,41 @@ void createQdc()
     {
     	XBARA_Init(XBARA1);
     	initXBARA = false;
-
     }
 
     switch(encNumber)
     {
       case(1):
 		muxPinsXBAR(pinA,kXBARA1_OutputEnc1PhaseAInput);
-		muxPinsXBAR(pinB,kXBARA1_OutputEnc1PhaseBInput);
-		encBase = ENC1;
+        if (!(pinB == nullptr))
+        {
+        	muxPinsXBAR(pinB,kXBARA1_OutputEnc1PhaseBInput);
+        }
+        encBase = ENC1;
       	break;
       case(2):
 		muxPinsXBAR(pinA,kXBARA1_OutputEnc2PhaseAInput);
-		muxPinsXBAR(pinB,kXBARA1_OutputEnc2PhaseBInput);
+        if (!(pinB == nullptr))
+        {
+        	muxPinsXBAR(pinB,kXBARA1_OutputEnc2PhaseBInput);
+        }
 		encBase = ENC2;
       	break;
       case(3):
 		muxPinsXBAR(pinA,kXBARA1_OutputEnc3PhaseAInput);
-		muxPinsXBAR(pinB,kXBARA1_OutputEnc3PhaseBInput);
+        if (!(pinB == nullptr))
+        {
+        	muxPinsXBAR(pinB,kXBARA1_OutputEnc3PhaseBInput);
+        }
 		encBase = ENC3;
       	break;
       case(4):
 		muxPinsXBAR(pinA,kXBARA1_OutputEnc4PhaseAInput);
-		muxPinsXBAR(pinB,kXBARA1_OutputEnc4PhaseBInput);
-		encBase = ENC4;
+        if (!(pinB == nullptr))
+        {
+        	muxPinsXBAR(pinB,kXBARA1_OutputEnc4PhaseBInput);
+        }
+        encBase = ENC4;
       	break;
       default:
     	break;
@@ -212,15 +223,21 @@ void createQdc()
     ptrProcessVariable[pv]  = &txData.processVariable[pv];
     ptrInputs = &txData.inputs;
 
-    if (pinI == nullptr)
+    if (pinI == nullptr && pinB == nullptr)
+	{
+		printf(" Single pin Frequency meter, has pin %s\n", pinA);
+		qdc[encNumber-1] = new Qdc(*ptrProcessVariable[pv],encBase, filt_per, filt_cnt, true);
+		baseThread->registerModule(qdc[encNumber-1]);
+	}
+    else if (pinI == nullptr)
     {
-    	printf("  Quadrature Encoder without index pin %s\n", pinI);
-    	qdc[encNumber-1] = new Qdc(*ptrProcessVariable[pv],encBase, filt_per, filt_cnt);
+    	printf(" Quadrature Encoder without index pin \n");
+    	qdc[encNumber-1] = new Qdc(*ptrProcessVariable[pv],encBase, filt_per, filt_cnt, false);
         baseThread->registerModule(qdc[encNumber-1]);
     }
     else
     {
-        printf("  Quadrature Encoder has index at pin %s\n", pinI);
+        printf(" Quadrature Encoder has index at pin %s\n", pinI);
         qdc[encNumber-1] = new Qdc(*ptrProcessVariable[pv], *ptrInputs, encBase, gpioBase, IndexIrqGpioPinId, indexPortNumber, indexPinInNumber, dataBit, filt_per, filt_cnt);
         NVIC_SetPriority(IndexIrqGpioPinId , 4);
         baseThread->registerModule(qdc[encNumber-1]);
@@ -232,7 +249,7 @@ void createQdc()
 *                METHOD DEFINITIONS                                    *
 ************************************************************************/
 
-Qdc::Qdc(volatile float &ptrEncoderCount, ENC_Type* encBase, int filt_per, int filt_cnt):
+/*Qdc::Qdc(volatile float &ptrEncoderCount, ENC_Type* encBase, int filt_per, int filt_cnt):
 	ptrEncoderCount(&ptrEncoderCount),
 	encBase(encBase),
 	filt_per(filt_per),
@@ -240,15 +257,47 @@ Qdc::Qdc(volatile float &ptrEncoderCount, ENC_Type* encBase, int filt_per, int f
 {
     enc_config_t mEncConfigStruct;
 
-    /* Initialize the ENC module. */
+    // Initialize the ENC module.
     ENC_GetDefaultConfig(&mEncConfigStruct);
     mEncConfigStruct.filterSamplePeriod = this->filt_per;
+    mEncConfigStruct.filterCount = this->filt_cnt;
+    ENC_Init(this->encBase, &mEncConfigStruct);
+    ENC_DoSoftwareLoadInitialPositionValue(this->encBase); // Update the position counter with initial value.
+
+    this->hasIndex = false;
+    this->count = 0;								// initialise the count to 0
+    printf("Encoder created\n");
+}*/
+
+Qdc::Qdc(volatile float &ptrEncoderCount, ENC_Type* encBase, int filt_per, int filt_cnt, bool FrequencyMode):
+	ptrEncoderCount(&ptrEncoderCount),
+	encBase(encBase),
+	filt_per(filt_per),
+	filt_cnt(filt_cnt)
+{
+	this->FrequencyMode = FrequencyMode;
+	this->PrevCount = 0;
+    enc_config_t mEncConfigStruct;
+
+    /* Initialize the ENC module. */
+    ENC_GetDefaultConfig(&mEncConfigStruct);
+    if(FrequencyMode)
+    {
+    	mEncConfigStruct.decoderWorkMode = kENC_DecoderWorkAsSignalPhaseCountMode;
+    	printf("Frequency meter created\n");
+    }
+    else
+    {
+    	printf("Encoder created\n");
+    }
+  	mEncConfigStruct.filterSamplePeriod = this->filt_per;
     mEncConfigStruct.filterCount = this->filt_cnt;
     ENC_Init(this->encBase, &mEncConfigStruct);
     ENC_DoSoftwareLoadInitialPositionValue(this->encBase); /* Update the position counter with initial value. */
 
     this->hasIndex = false;
     this->count = 0;								// initialise the count to 0
+
 }
 
 Qdc::Qdc(volatile float &ptrEncoderCount, volatile uint32_t &ptrData, ENC_Type* encBase,
@@ -283,6 +332,7 @@ Qdc::Qdc(volatile float &ptrEncoderCount, volatile uint32_t &ptrData, ENC_Type* 
     this->pulseCount = 0;                                           // number of base thread periods to pulse the index output
     this->mask = 1 << this->bitNumber;
     this->indexDetected = false;
+    printf("Encoder with INDEX created\n");
 }
 
 void Qdc::update()
@@ -311,7 +361,24 @@ void Qdc::update()
   }
   else
   {
-      *(this->ptrEncoderCount) = this->count;             // update encoder count
+	  if(this->FrequencyMode){
+		  if(!(this->count - this->PrevCount))
+		  {
+			  this->RepetitionCounter++;
+		  }
+		  else
+		  {
+			  *(this->ptrEncoderCount) = PRU_BASEFREQ / (this->count - this->PrevCount + this->RepetitionCounter);	//update difference count
+			  this->RepetitionCounter = 0;
+			  this->PrevCount = this->count;
+
+		  }
+	  }
+	  else
+	  {
+		  *(this->ptrEncoderCount) = this->count; 		// update encoder count
+	  }
+
   }
 }
 

@@ -50,14 +50,18 @@ class Qdc : public Module
 
         uint8_t state;
         int32_t count;
+        int32_t PrevCount;
+        int32_t RepetitionCounter;
         int32_t indexCount;
         int8_t  indexPulse;
         int8_t  pulseCount;
         bool    indexDetected;
+        bool	FrequencyMode;
 
 	public:
 
-        Qdc(volatile float&, ENC_Type*, int, int);
+        //Qdc(volatile float&, ENC_Type*, int, int);
+        Qdc(volatile float&, ENC_Type*, int, int, bool);
         Qdc(volatile float&, volatile uint32_t&, ENC_Type*, GPIO_Type*, IRQn_Type, int, int, int, int, int);
         virtual void update(void);	// Module default interface
         virtual void disableInterrupt(void);
