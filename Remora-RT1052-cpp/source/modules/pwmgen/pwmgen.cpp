@@ -133,6 +133,7 @@ PwmGen::PwmGen(uint8_t jointNumber, uint8_t pwm, uint16_t pwmFreqHz, uint8_t min
 void PwmGen::update()
 {
 	// Use the standard Module interface to run makePulses()
+
 	this->makePulses();
 }
 
@@ -183,10 +184,6 @@ void PwmGen::makePulses()
                 this->dutyCycle = -tmpDC;
             }
 
-        
-
-            printf("%.1f\n",this->dutyCycle);
-
             // stop the timer so we can force an output state if needed
             QTMR_StopTimer(QTMR_BASEADDR, this->channel);
 
@@ -209,7 +206,7 @@ void PwmGen::makePulses()
 
                 /* Counter values to generate a PWM signal */
                 this->periodCount = srcClock_Hz / pwmFreqHz;
-                this->highCount   = (uint32_t) ((float)periodCount * (this->dutyCycle-1)) / 100;
+                this->highCount   = (uint32_t) ((float)periodCount * (100-this->dutyCycle)) / 100;
                 this->lowCount    = this->periodCount - this->highCount;
 
                 if (this->highCount > 0U)
@@ -264,6 +261,10 @@ void PwmGen::makePulses()
         }
 
     }
+    else
+    {
+    	this->stopPulses();
+    }
 
 
     return;
@@ -273,11 +274,14 @@ void PwmGen::makePulses()
 
 void PwmGen::stopPulses()
 {
+	this->dutyCycle = 0.0;
     // stop the timer so we can force an output state if needed
     QTMR_StopTimer(QTMR_BASEADDR, this->channel);
- 
-    /* Set OFLAG pin for output mode and force out a low on the pin */
-    base->CHANNEL[this->channel].SCTRL |= (TMR_SCTRL_FORCE_MASK | TMR_SCTRL_OEN_MASK);
+
+    // use the FORCE and VAL registers to output 0
+    this->base->CHANNEL[this->channel].SCTRL = (TMR_SCTRL_FORCE_MASK | TMR_SCTRL_OEN_MASK | TMR_SCTRL_VAL(0));
+
+    this->dirPin->set(false);
  
     return;
 }

@@ -63,8 +63,8 @@ along with this program; If not, see <http://www.gnu.org/licenses/>.
 //#include "modules/debug/debug.h"
 #include "modules/DMAstepgen/DMAstepgen.h"
 #include "modules/encoder/encoder.h"
-#include "modules/pwmgen/pwmgen.h"
 #include "modules/qdc/qdc.h"
+#include "modules/pwmgen/pwmgen.h"
 #include "modules/comms/RemoraComms.h"
 #include "modules/pwm/spindlePwm.h"
 #include "modules/stepgen/stepgen.h"
@@ -465,7 +465,7 @@ void loadModules(void)
 			{
 				createPwmGen();
 			}
-        }
+         }
         else if (!strcmp(thread,"Servo"))
         {
             printf("\nServo thread object\n");
