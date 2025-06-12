@@ -57,19 +57,15 @@ void SpindlePWM::update()
         	this->pwmPulseWidth = 0.0;
         }
 
-        // stop the timer so we can force an output state if needed
-        QTMR_StopTimer(QTMR_BASEADDR, QTMR_PWM_CHANNEL);
 
         // manage the Quad Timer inability to handle 0 and 100% conditions
         if (this->pwmPulseWidth == 0.0)
         {
-        	// use the FORCE and VAL registers to output 0
-        	this->base->CHANNEL[this->channel].SCTRL = (TMR_SCTRL_FORCE_MASK | TMR_SCTRL_OEN_MASK | TMR_SCTRL_VAL(0));
+        	forcePwmOutput(0);
         }
         else if (this->pwmPulseWidth == 100.0)
         {
-        	// use the FORCE and VAL registers to output 1
-        	this->base->CHANNEL[this->channel].SCTRL = (TMR_SCTRL_FORCE_MASK | TMR_SCTRL_OEN_MASK | TMR_SCTRL_VAL(1));
+        	forcePwmOutput(1);
         }
         else
         {
@@ -124,9 +120,6 @@ void SpindlePWM::update()
              */
             this->reg |= (TMR_CTRL_LENGTH_MASK | TMR_CTRL_OUTMODE(kQTMR_ToggleOnAltCompareReg));
             this->base->CHANNEL[this->channel].CTRL = this->reg;
-
-            // restart the timer
-            QTMR_StartTimer(QTMR_BASEADDR, QTMR_PWM_CHANNEL, kQTMR_PriSrcRiseEdge);
         }
     }
 
@@ -137,4 +130,14 @@ void SpindlePWM::update()
 void SpindlePWM::slowUpdate()
 {
 	return;
+}
+
+void SpindlePWM::forcePwmOutput(uint8_t value) {
+    QTMR_StopTimer(QTMR_BASEADDR, QTMR_PWM_CHANNEL);
+
+    // Set output value using FORCE and VAL
+    this->base->CHANNEL[this->channel].SCTRL =
+        (TMR_SCTRL_FORCE_MASK | TMR_SCTRL_OEN_MASK | TMR_SCTRL_VAL(value));
+
+    QTMR_StartTimer(QTMR_BASEADDR, QTMR_PWM_CHANNEL, kQTMR_PriSrcRiseEdge);
 }

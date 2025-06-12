@@ -34,6 +34,8 @@ class SpindlePWM : public Module
 		uint32_t 					lowCount;
         uint16_t 					reg;
 
+        void forcePwmOutput(uint8_t value);
+
 	public:
 
 		SpindlePWM(volatile float&);
