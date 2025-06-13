@@ -120,6 +120,8 @@ void SpindlePWM::update()
              */
             this->reg |= (TMR_CTRL_LENGTH_MASK | TMR_CTRL_OUTMODE(kQTMR_ToggleOnAltCompareReg));
             this->base->CHANNEL[this->channel].CTRL = this->reg;
+
+            QTMR_StartTimer(QTMR_BASEADDR, QTMR_PWM_CHANNEL, kQTMR_PriSrcRiseEdge);
         }
     }
 
@@ -138,6 +140,4 @@ void SpindlePWM::forcePwmOutput(uint8_t value) {
     // Set output value using FORCE and VAL
     this->base->CHANNEL[this->channel].SCTRL =
         (TMR_SCTRL_FORCE_MASK | TMR_SCTRL_OEN_MASK | TMR_SCTRL_VAL(value));
-
-    QTMR_StartTimer(QTMR_BASEADDR, QTMR_PWM_CHANNEL, kQTMR_PriSrcRiseEdge);
 }
